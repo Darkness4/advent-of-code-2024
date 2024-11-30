@@ -1,0 +1,35 @@
+name: Zig CI
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+    branches:
+      - 'main'
+      - 'release/*'
+    paths:
+      - 'src/**'
+      - '**.zig'
+      - '**.c'
+      - '**.h'
+      - 'Dockerfile*'
+      - '.github/workflows/main.yaml'
+  pull_request:
+    branches:
+      - 'main'
+      - 'release/*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker run --rm -v $(pwd):/work -w /work ghcr.io/darkness4/aoc-2024:base zig build
+
+      - name: Test
+        run: docker run --rm -v $(pwd):/work -w /work ghcr.io/darkness4/aoc-2024:base zig build test

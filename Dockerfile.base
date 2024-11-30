@@ -1,0 +1,7 @@
+FROM docker.io/gentoo/stage3:musl
+
+COPY .docker/etc/portage/package.accept_keywords/default /etc/portage/package.accept_keywords/default
+
+RUN emerge-webrsync \
+  && MAKEOPTS="-j$(nproc)" emerge '=dev-lang/zig-9999' \
+  && rm -rf /var/cache/distfiles/* /var/cache/binpkgs/* /var/tmp/portage/ /var/db/repos/gentoo/*

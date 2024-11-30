@@ -13,19 +13,20 @@ pub fn build(b: *std.Build) !void {
     const test_run = b.step("test", "Run unit tests");
     const all_run = b.step("all", "Run all");
 
-    var buf: [24]u8 = undefined;
+    var day_run_desc_buf: [24]u8 = undefined;
+    var source_path_buf: [24]u8 = undefined;
     for (days) |day| {
-        const source_path = b.path(try std.fmt.bufPrint(&buf, "src/{s}.zig", .{day}));
+        const source_path = b.path(try std.fmt.bufPrint(&source_path_buf, "src/{s}.zig", .{day}));
         const day_exe = b.addExecutable(.{
             .name = day,
             .root_source_file = source_path,
             .target = target,
             .optimize = optimize,
         });
-        const day_run = b.step(day, try std.fmt.bufPrint(&buf, "Run {s}", .{day}));
+        const day_run = b.step(day, try std.fmt.bufPrint(&day_run_desc_buf, "Run {s}", .{day}));
         b.installArtifact(day_exe);
         day_run.dependOn(&(b.addRunArtifact(day_exe)).step);
-        all_run.dependOn(&(b.addRunArtifact(day_exe)).step);
+        all_run.dependOn(day_run);
 
         const day_test = b.addTest(.{
             .name = day,
