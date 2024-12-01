@@ -1,7 +1,18 @@
-FROM docker.io/gentoo/stage3:musl
+FROM docker.io/gentoo/stage3:amd64-openrc AS base-builder
 
 COPY .docker/etc/portage/package.accept_keywords/default /etc/portage/package.accept_keywords/default
+COPY .docker/etc/portage/make.conf /etc/portage/make.conf
 
-RUN emerge-webrsync \
-  && MAKEOPTS="-j$(nproc)" emerge '=dev-lang/zig-9999' \
+RUN emerge-webrsync
+
+RUN sed -i '/hkps:\/\/keys\.openpgp\.org/d' /usr/sbin/getuto ; getuto ; ROOT="/rootfs" MAKEOPTS="-j$(nproc)" emerge \
+  --with-bdeps=n \
+  --getbinpkg \
+  '=dev-lang/zig-9999' \
   && rm -rf /var/cache/distfiles/* /var/cache/binpkgs/* /var/tmp/portage/ /var/db/repos/gentoo/*
+
+FROM scratch
+
+COPY --from=base-builder /rootfs /
+
+ENTRYPOINT [ "/usr/bin/zig" ]
