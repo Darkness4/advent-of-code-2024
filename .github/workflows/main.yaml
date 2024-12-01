@@ -28,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Run
+        run: ld.so --help
+
       - name: Build
         run: docker run --rm -v $(pwd):/work -w /work ghcr.io/darkness4/aoc-2024:base build
 
