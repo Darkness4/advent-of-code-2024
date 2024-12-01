@@ -21,13 +21,13 @@ fn day1(data: []const u8) !u64 {
             continue;
         }
         var groups = std.mem.tokenizeAny(u8, line, " ");
-        try list_a.append(try std.fmt.parseInt(i64, groups.next().?, 10));
-        try list_b.append(try std.fmt.parseInt(i64, groups.next().?, 10));
+        list_a.appendAssumeCapacity(try std.fmt.parseInt(i64, groups.next().?, 10));
+        list_b.appendAssumeCapacity(try std.fmt.parseInt(i64, groups.next().?, 10));
     }
 
-    // Sort the lists
-    std.mem.sort(i64, list_a.items, {}, comptime std.sort.asc(i64));
-    std.mem.sort(i64, list_b.items, {}, comptime std.sort.asc(i64));
+    // Sort the lists (using pdq, which is used by Go)
+    std.sort.pdq(i64, list_a.items, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(i64, list_b.items, {}, comptime std.sort.asc(i64));
 
     // Compute the distance
     var acc: u64 = 0;
@@ -41,8 +41,10 @@ fn day1(data: []const u8) !u64 {
 fn day1p2(data: []const u8) !i64 {
     var lines = std.mem.splitSequence(u8, data, "\n");
 
-    var occurences_a: [100000]i64 = [_]i64{0} ** 100000;
-    var occurences_b: [100000]i64 = [_]i64{0} ** 100000;
+    var list_a = try std.ArrayList(usize).initCapacity(allocator, 1000);
+    defer list_a.deinit();
+
+    var occurrences = [_]i64{0} ** 100000;
 
     // Read two columns of numbers
     while (lines.next()) |line| {
@@ -51,15 +53,15 @@ fn day1p2(data: []const u8) !i64 {
         }
         var groups = std.mem.tokenizeAny(u8, line, " ");
         const a = try std.fmt.parseInt(usize, groups.next().?, 10);
-        occurences_a[a] += 1;
         const b = try std.fmt.parseInt(usize, groups.next().?, 10);
-        occurences_b[b] += 1;
+        list_a.appendAssumeCapacity(a);
+        occurrences[b] += 1;
     }
 
     // Compute similarity
     var acc: i64 = 0;
-    for (0.., occurences_a, occurences_b) |i, a, b| {
-        acc += @as(i64, @intCast(i)) * a * b;
+    for (list_a.items) |a| {
+        acc += @as(i64, @intCast(a)) * occurrences[a];
     }
 
     return acc;

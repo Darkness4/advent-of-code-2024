@@ -4,7 +4,9 @@ const std = @import("std");
 // Ref: https://ziglang.org/documentation/master/#Zig-Build-System/
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{
+        .preferred_optimize_mode = .ReleaseFast,
+    });
 
     const days = [_][]const u8{
         "day1",
