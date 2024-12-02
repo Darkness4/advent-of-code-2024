@@ -8,6 +8,8 @@ pub fn build(b: *std.Build) !void {
         .preferred_optimize_mode = .ReleaseFast,
     });
 
+    const zbench_module = b.dependency("zbench", .{ .target = target, .optimize = optimize }).module("zbench");
+
     const days = [_][]const u8{
         "day1",
         "day2",
@@ -26,6 +28,7 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
         });
+        day_exe.root_module.addImport("zbench", zbench_module);
         const day_run = b.step(day, try std.fmt.bufPrint(&day_run_desc_buf, "Run {s}", .{day}));
         b.installArtifact(day_exe);
         day_run.dependOn(&(b.addRunArtifact(day_exe)).step);
@@ -37,6 +40,7 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
         });
+        day_test.root_module.addImport("zbench", zbench_module);
         test_run.dependOn(&(b.addRunArtifact(day_test)).step);
     }
 }
