@@ -38,13 +38,13 @@ fn day1(data: []const u8) !u64 {
     return acc;
 }
 
-fn day1p2(data: []const u8) !i64 {
+fn day1p2(data: []const u8) !usize {
     var lines = std.mem.splitSequence(u8, data, "\n");
 
     var list_a = try std.ArrayList(usize).initCapacity(allocator, 1000);
     defer list_a.deinit();
 
-    var occurrences = [_]i64{0} ** 100000;
+    var occurrences = [_]usize{0} ** 100000;
 
     // Read two columns of numbers
     while (lines.next()) |line| {
@@ -59,9 +59,9 @@ fn day1p2(data: []const u8) !i64 {
     }
 
     // Compute similarity
-    var acc: i64 = 0;
+    var acc: usize = 0;
     for (list_a.items) |a| {
-        acc += @as(i64, @intCast(a)) * occurrences[a];
+        acc += a * occurrences[a];
     }
 
     return acc;
