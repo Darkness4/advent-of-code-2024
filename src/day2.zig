@@ -1,8 +1,5 @@
 const std = @import("std");
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-
 var input = @embedFile("day2.txt");
 var input_test = @embedFile("day2_test.txt");
 
@@ -44,8 +41,7 @@ fn day2p2(data: []const u8) !usize {
 
     var acc: u64 = 0;
 
-    var levels = try std.ArrayList(i64).initCapacity(allocator, 10);
-    defer levels.deinit();
+    var levels: [10]i64 = undefined;
 
     while (lines.next()) |line| {
         if (line.len == 0) {
@@ -54,19 +50,20 @@ fn day2p2(data: []const u8) !usize {
         var lvls = std.mem.splitScalar(u8, line, ' ');
 
         // Read everything
-        defer levels.clearRetainingCapacity();
-        while (lvls.next()) |level| {
+        var idx: usize = 0;
+        while (lvls.next()) |level| : (idx += 1) {
             const l = try std.fmt.parseInt(i64, level, 10);
-            try levels.append(l);
+            levels[idx] = l;
         }
+        const cap = idx;
 
         // Loop over with skipping 1 level if needed
-        skip: for (0..levels.items.len + 1) |skip_it| {
+        skip: for (0..cap + 1) |skip_it| {
             var last: ?i64 = null;
             var last_diff: i64 = 0;
 
-            for (0.., levels.items) |idx, l| {
-                if (skip_it == idx) {
+            for (0.., levels[0..cap]) |i, l| {
+                if (skip_it == i) {
                     continue;
                 }
 

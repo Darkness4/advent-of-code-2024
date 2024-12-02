@@ -1,8 +1,5 @@
 const std = @import("std");
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-
 var input = @embedFile("day1.txt");
 var input_test = @embedFile("day1_test.txt");
 
@@ -14,7 +11,7 @@ fn day1(data: []const u8) !u64 {
 
     // Read two columns of numbers
     var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
+    while (lines.next()) |line| {
         if (line.len == 0) {
             continue;
         }
@@ -22,11 +19,15 @@ fn day1(data: []const u8) !u64 {
 
         list_a[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
         list_b[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
+        idx += 1;
     }
+    const cap = idx;
+    const slice_a = list_a[0..cap];
+    const slice_b = list_b[0..cap];
 
     // Sort the lists (using pdq, which is used by Go)
-    std.sort.pdq(i64, &list_a, {}, comptime std.sort.asc(i64));
-    std.sort.pdq(i64, &list_b, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(i64, slice_a, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(i64, slice_b, {}, comptime std.sort.asc(i64));
 
     // Compute the distance
     var acc: u64 = 0;
@@ -45,7 +46,7 @@ fn day1p2(data: []const u8) !usize {
 
     // Read two columns of numbers
     var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
+    while (lines.next()) |line| {
         if (line.len == 0) {
             continue;
         }
@@ -54,11 +55,13 @@ fn day1p2(data: []const u8) !usize {
         const b = try std.fmt.parseInt(usize, groups.next().?, 10);
         list_a[idx] = a;
         occurrences[b] += 1;
+        idx += 1;
     }
+    const cap = idx;
 
     // Compute similarity
     var acc: usize = 0;
-    for (list_a) |a| {
+    for (list_a[0..cap]) |a| {
         acc += a * occurrences[a];
     }
 
