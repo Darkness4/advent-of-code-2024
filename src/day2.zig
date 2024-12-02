@@ -18,28 +18,16 @@ fn day2(data: []const u8) !u64 {
             continue;
         }
         var levels = std.mem.splitSequence(u8, line, " ");
-        var last: ?i64 = null;
+        var last: i64 = try std.fmt.parseInt(i64, levels.next().?, 10);
         var last_diff: i64 = 0;
         while (levels.next()) |level| {
             const l = try std.fmt.parseInt(i64, level, 10);
 
-            // First char
-            if (last == null) {
-                last = l;
-                continue;
-            }
-
             // Second char or after
-            const diff = l - last.?;
+            const diff = l - last;
 
-            // Rule: The levels are either all increasing or all decreasing.
-            if (diff * last_diff < 0) {
-                // Invalid
-                continue :line;
-            }
-
-            // Rule: Any two adjacent levels differ by at least one and at most three.
-            if (@abs(diff) > 3 or @abs(diff) == 0) {
+            // Apply rules
+            if (diff * last_diff < 0 or @abs(diff) > 3 or @abs(diff) == 0) {
                 // Invalid
                 continue :line;
             }
@@ -58,6 +46,9 @@ fn day2p2(data: []const u8) !usize {
 
     var acc: u64 = 0;
 
+    var levels = try std.ArrayList(i64).initCapacity(allocator, 10);
+    defer levels.deinit();
+
     while (lines.next()) |line| {
         if (line.len == 0) {
             continue;
@@ -65,8 +56,7 @@ fn day2p2(data: []const u8) !usize {
         var lvls = std.mem.splitSequence(u8, line, " ");
 
         // Read everything
-        var levels = try std.ArrayList(i64).initCapacity(allocator, 10);
-        defer levels.deinit();
+        defer levels.clearRetainingCapacity();
         while (lvls.next()) |level| {
             const l = try std.fmt.parseInt(i64, level, 10);
             try levels.append(l);
