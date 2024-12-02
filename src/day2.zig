@@ -6,10 +6,8 @@ const allocator = gpa.allocator();
 var input = @embedFile("day2.txt");
 var input_test = @embedFile("day2_test.txt");
 
-// You could SIMD or MPI the sh-t out of this!
-// Just compute the derivative and apply the rules.
 fn day2(data: []const u8) !u64 {
-    var lines = std.mem.splitSequence(u8, data, "\n");
+    var lines = std.mem.splitScalar(u8, data, '\n');
 
     var acc: u64 = 0;
 
@@ -17,7 +15,7 @@ fn day2(data: []const u8) !u64 {
         if (line.len == 0) {
             continue;
         }
-        var levels = std.mem.splitSequence(u8, line, " ");
+        var levels = std.mem.splitScalar(u8, line, ' ');
         var last: i64 = try std.fmt.parseInt(i64, levels.next().?, 10);
         var last_diff: i64 = 0;
         while (levels.next()) |level| {
@@ -42,7 +40,7 @@ fn day2(data: []const u8) !u64 {
 }
 
 fn day2p2(data: []const u8) !usize {
-    var lines = std.mem.splitSequence(u8, data, "\n");
+    var lines = std.mem.splitScalar(u8, data, '\n');
 
     var acc: u64 = 0;
 
@@ -53,7 +51,7 @@ fn day2p2(data: []const u8) !usize {
         if (line.len == 0) {
             continue;
         }
-        var lvls = std.mem.splitSequence(u8, line, " ");
+        var lvls = std.mem.splitScalar(u8, line, ' ');
 
         // Read everything
         defer levels.clearRetainingCapacity();

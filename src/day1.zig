@@ -7,31 +7,30 @@ var input = @embedFile("day1.txt");
 var input_test = @embedFile("day1_test.txt");
 
 fn day1(data: []const u8) !u64 {
-    var lines = std.mem.splitSequence(u8, data, "\n");
+    var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var list_a = try std.ArrayList(i64).initCapacity(allocator, 1000);
-    defer list_a.deinit();
-
-    var list_b = try std.ArrayList(i64).initCapacity(allocator, 1000);
-    defer list_b.deinit();
+    var list_a: [1000]i64 = undefined;
+    var list_b: [1000]i64 = undefined;
 
     // Read two columns of numbers
-    while (lines.next()) |line| {
+    var idx: usize = 0;
+    while (lines.next()) |line| : (idx += 1) {
         if (line.len == 0) {
             continue;
         }
-        var groups = std.mem.tokenizeAny(u8, line, " ");
-        list_a.appendAssumeCapacity(try std.fmt.parseInt(i64, groups.next().?, 10));
-        list_b.appendAssumeCapacity(try std.fmt.parseInt(i64, groups.next().?, 10));
+        var groups = std.mem.splitSequence(u8, line, "   ");
+
+        list_a[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
+        list_b[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
     }
 
     // Sort the lists (using pdq, which is used by Go)
-    std.sort.pdq(i64, list_a.items, {}, comptime std.sort.asc(i64));
-    std.sort.pdq(i64, list_b.items, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(i64, &list_a, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(i64, &list_b, {}, comptime std.sort.asc(i64));
 
     // Compute the distance
     var acc: u64 = 0;
-    for (list_a.items, list_b.items) |a, b| {
+    for (list_a, list_b) |a, b| {
         acc += @abs(a - b);
     }
 
@@ -39,28 +38,27 @@ fn day1(data: []const u8) !u64 {
 }
 
 fn day1p2(data: []const u8) !usize {
-    var lines = std.mem.splitSequence(u8, data, "\n");
+    var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var list_a = try std.ArrayList(usize).initCapacity(allocator, 1000);
-    defer list_a.deinit();
-
+    var list_a: [1000]usize = undefined;
     var occurrences = [_]usize{0} ** 100000;
 
     // Read two columns of numbers
-    while (lines.next()) |line| {
+    var idx: usize = 0;
+    while (lines.next()) |line| : (idx += 1) {
         if (line.len == 0) {
             continue;
         }
-        var groups = std.mem.tokenizeAny(u8, line, " ");
+        var groups = std.mem.splitSequence(u8, line, "   ");
         const a = try std.fmt.parseInt(usize, groups.next().?, 10);
         const b = try std.fmt.parseInt(usize, groups.next().?, 10);
-        list_a.appendAssumeCapacity(a);
+        list_a[idx] = a;
         occurrences[b] += 1;
     }
 
     // Compute similarity
     var acc: usize = 0;
-    for (list_a.items) |a| {
+    for (list_a) |a| {
         acc += a * occurrences[a];
     }
 
