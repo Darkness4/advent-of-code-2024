@@ -10,6 +10,7 @@ pub fn build(b: *std.Build) !void {
 
     const days = [_][]const u8{
         "day1",
+        "day2",
     };
 
     const test_run = b.step("test", "Run unit tests");
