@@ -12,6 +12,8 @@ RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" emerge \
   --onlydeps \
   '=dev-lang/zig-9999'
 
+FROM base-builder AS zig-builder
+
 RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" \
   ZIG_MCPU="x86_64_v3" \
   emerge \
@@ -22,5 +24,6 @@ RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" \
 FROM scratch
 
 COPY --from=base-builder /rootfs /
+COPY --from=zig-builder /rootfs /
 
 ENTRYPOINT [ "/usr/bin/zig" ]
