@@ -1,7 +1,7 @@
 const std = @import("std");
 
-var input = std.mem.trimRight(u8, @embedFile("day2.txt"), "\n");
-var input_test = std.mem.trimRight(u8, @embedFile("day2_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day2.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day2_test.txt"), "\n");
 
 fn day2(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
@@ -51,8 +51,8 @@ fn day2p2(data: []const u8) !usize {
         }
         const cap = idx;
 
-        // Loop over with skipping 1 level if needed
-        skip: for (0..cap + 1) |skip_it| {
+        // Loop over with skipping 1 level
+        skip: for (0..cap) |skip_it| {
             var last: ?i64 = null;
             var last_diff: i64 = 0;
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 
-var input = std.mem.trimRight(u8, @embedFile("day1.txt"), "\n");
-var input_test = std.mem.trimRight(u8, @embedFile("day1_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day1.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day1_test.txt"), "\n");
 
 fn day1(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
