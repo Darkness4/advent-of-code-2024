@@ -1,7 +1,7 @@
 const std = @import("std");
 
-var input = @embedFile("day2.txt");
-var input_test = @embedFile("day2_test.txt");
+var input = std.mem.trimRight(u8, @embedFile("day2.txt"), "\n");
+var input_test = std.mem.trimRight(u8, @embedFile("day2_test.txt"), "\n");
 
 fn day2(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
@@ -9,9 +9,6 @@ fn day2(data: []const u8) !u64 {
     var acc: u64 = 0;
 
     line: while (lines.next()) |line| {
-        if (line.len == 0) {
-            continue;
-        }
         var levels = std.mem.splitScalar(u8, line, ' ');
         var last: i64 = try std.fmt.parseInt(i64, levels.next().?, 10);
         var last_diff: i64 = 0;
@@ -44,9 +41,6 @@ fn day2p2(data: []const u8) !usize {
     var levels: [10]i64 = undefined;
 
     while (lines.next()) |line| {
-        if (line.len == 0) {
-            continue;
-        }
         var lvls = std.mem.splitScalar(u8, line, ' ');
 
         // Read everything

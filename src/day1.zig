@@ -1,7 +1,7 @@
 const std = @import("std");
 
-var input = @embedFile("day1.txt");
-var input_test = @embedFile("day1_test.txt");
+var input = std.mem.trimRight(u8, @embedFile("day1.txt"), "\n");
+var input_test = std.mem.trimRight(u8, @embedFile("day1_test.txt"), "\n");
 
 fn day1(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
@@ -11,15 +11,11 @@ fn day1(data: []const u8) !u64 {
 
     // Read two columns of numbers
     var idx: usize = 0;
-    while (lines.next()) |line| {
-        if (line.len == 0) {
-            continue;
-        }
+    while (lines.next()) |line| : (idx += 1) {
         var groups = std.mem.splitSequence(u8, line, "   ");
 
         list_a[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
         list_b[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
-        idx += 1;
     }
     const cap = idx;
     const slice_a = list_a[0..cap];
@@ -46,16 +42,12 @@ fn day1p2(data: []const u8) !usize {
 
     // Read two columns of numbers
     var idx: usize = 0;
-    while (lines.next()) |line| {
-        if (line.len == 0) {
-            continue;
-        }
+    while (lines.next()) |line| : (idx += 1) {
         var groups = std.mem.splitSequence(u8, line, "   ");
         const a = try std.fmt.parseInt(usize, groups.next().?, 10);
         const b = try std.fmt.parseInt(usize, groups.next().?, 10);
         list_a[idx] = a;
         occurrences[b] += 1;
-        idx += 1;
     }
     const cap = idx;
 
