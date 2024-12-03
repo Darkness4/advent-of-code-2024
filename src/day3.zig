@@ -23,7 +23,23 @@ fn next(data: []const u8, idx: *usize) !void {
     }
 }
 
-// Good 'ol lexer.
+/// Good 'ol lexer. This is the method used to scan a file in programming languages.
+/// I used the method used by Go to scan the source code in token.
+/// We don't have to be clever about parenthesis, so the tokens are simply:
+/// - 'mul(' with its ')'.
+/// - Numbers.
+/// Compared to real programming languages, the trash is ignored.
+///
+/// The implementation is the following:
+///
+/// 1. Check for the first char of the token. ('m')
+/// 2. The first char is confirmed, so we read ahead to check the next char. ('ul(')
+/// 3. We scan the integer. In a real world scenario, we would check the many format of a number.
+///    Here's, we simply check for digits.
+/// 4. Read the comma.
+/// 5. Scan the second integer.
+/// 6. Read the closing parenthesis.
+/// 7. Statement is valid. Compute the multiplication and done.
 fn day3(data: []const u8) !u64 {
     var acc: u64 = 0;
     var idx: usize = 0;
@@ -62,7 +78,7 @@ fn day3(data: []const u8) !u64 {
     return acc;
 }
 
-// Another lexer. In a real world scenario, the first char would be checked as "isLetter/isNumber" instead of an hardcoded char.
+/// Another lexer.
 fn day3p2(data: []const u8) !usize {
     var acc: u64 = 0;
     var idx: usize = 0;
