@@ -88,10 +88,18 @@ pub fn main() !void {
 
 test "day1" {
     const result = try day1(input_test);
-    try std.testing.expect(result == 11);
+    const expect = 11;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }
 
 test "day1p2" {
     const result = try day1p2(input_test);
-    try std.testing.expect(result == 31);
+    const expect = 31;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }

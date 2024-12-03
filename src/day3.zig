@@ -162,12 +162,18 @@ pub fn main() !void {
 
 test "day3" {
     const result = try day3(input_test);
-    std.debug.print("result: {}\n", .{result});
-    try std.testing.expect(result == 161);
+    const expect = 161;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }
 
 test "day3p2" {
     const result = try day3p2(input_test);
-    std.debug.print("result: {}\n", .{result});
-    try std.testing.expect(result == 48);
+    const expect = 48;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }

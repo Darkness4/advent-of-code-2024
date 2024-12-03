@@ -110,10 +110,18 @@ pub fn main() !void {
 
 test "day2" {
     const result = try day2(input_test);
-    try std.testing.expect(result == 2);
+    const expect = 2;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }
 
 test "day2p2" {
     const result = try day2p2(input_test);
-    try std.testing.expect(result == 4);
+    const expect = 4;
+    std.testing.expect(result == expect) catch |err| {
+        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+        return err;
+    };
 }
