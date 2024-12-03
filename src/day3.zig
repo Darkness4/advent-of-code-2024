@@ -18,9 +18,7 @@ fn scanNumber(data: []const u8, idx: *usize) !u64 {
 
 fn next(data: []const u8, idx: *usize) !void {
     idx.* += 1;
-    if (idx.* >= data.len) {
-        return error.EOF;
-    }
+    if (idx.* >= data.len) return error.EOF;
 }
 
 /// Good 'ol lexer. This is the method used to scan a file in programming languages.
@@ -46,23 +44,19 @@ fn day3(data: []const u8) !u64 {
     scan: while (idx < data.len) : (idx += 1) {
         redo: switch (data[idx]) {
             'm' => { // is literal and is maybe 'mul'
+                next(data, &idx) catch break :scan;
                 inline for ("ul(") |expect| {
+                    if (data[idx] != expect) break :redo;
                     next(data, &idx) catch break :scan;
-                    if (data[idx] != expect) {
-                        break :redo;
-                    }
                 }
+
                 // Found 'mul(', now scan for number
-                next(data, &idx) catch break :scan;
                 const a = scanNumber(data, &idx) catch break :scan;
-                if (data[idx] != ',') {
-                    break :redo;
-                }
+                if (data[idx] != ',') break :redo;
                 next(data, &idx) catch break :scan;
+
                 const b = scanNumber(data, &idx) catch break :scan;
-                if (data[idx] != ')') {
-                    break :redo;
-                }
+                if (data[idx] != ')') break :redo;
                 acc += a * b;
             },
             else => {},
@@ -80,22 +74,18 @@ fn day3p2(data: []const u8) !usize {
     scan: while (idx < data.len) : (idx += 1) {
         redo: switch (data[idx]) {
             'm' => { // is literal and is maybe 'mul'
+                next(data, &idx) catch break :scan;
                 inline for ("ul(") |expect| {
+                    if (data[idx] != expect) break :redo;
                     next(data, &idx) catch break :scan;
-                    if (data[idx] != expect) {
-                        break :redo;
-                    }
                 }
                 // Found 'mul(', now scan for number
-                next(data, &idx) catch break :scan;
                 const a = scanNumber(data, &idx) catch break :scan;
                 if (data[idx] != ',') break :redo;
                 next(data, &idx) catch break :scan;
                 const b = scanNumber(data, &idx) catch break :scan;
                 if (data[idx] != ')') break :redo;
-                if (enabled) {
-                    acc += a * b;
-                }
+                if (enabled) acc += a * b;
             },
             'd' => { // is literal and is maybe 'do()' or 'don't()'
                 next(data, &idx) catch break :scan;
@@ -109,14 +99,12 @@ fn day3p2(data: []const u8) !usize {
                         enabled = true;
                     },
                     'n' => {
+                        next(data, &idx) catch break :scan;
                         inline for ("'t(") |expect| {
+                            if (data[idx] != expect) break :redo;
                             next(data, &idx) catch break :scan;
-                            if (data[idx] != expect) {
-                                break :redo;
-                            }
                         }
                         // Found 'don't('
-                        next(data, &idx) catch break :scan;
                         if (data[idx] != ')') break :redo;
                         enabled = false;
                     },
