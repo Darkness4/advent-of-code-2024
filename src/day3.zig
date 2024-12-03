@@ -46,17 +46,11 @@ fn day3(data: []const u8) !u64 {
     scan: while (idx < data.len) : (idx += 1) {
         redo: switch (data[idx]) {
             'm' => { // is literal and is maybe 'mul'
-                next(data, &idx) catch break :scan;
-                if (data[idx] != 'u') {
-                    break :redo;
-                }
-                next(data, &idx) catch break :scan;
-                if (data[idx] != 'l') {
-                    break :redo;
-                }
-                next(data, &idx) catch break :scan;
-                if (data[idx] != '(') {
-                    break :redo;
+                inline for ("ul(") |expect| {
+                    next(data, &idx) catch break :scan;
+                    if (data[idx] != expect) {
+                        break :redo;
+                    }
                 }
                 // Found 'mul(', now scan for number
                 next(data, &idx) catch break :scan;
@@ -86,12 +80,12 @@ fn day3p2(data: []const u8) !usize {
     scan: while (idx < data.len) : (idx += 1) {
         redo: switch (data[idx]) {
             'm' => { // is literal and is maybe 'mul'
-                next(data, &idx) catch break :scan;
-                if (data[idx] != 'u') break :redo;
-                next(data, &idx) catch break :scan;
-                if (data[idx] != 'l') break :redo;
-                next(data, &idx) catch break :scan;
-                if (data[idx] != '(') break :redo;
+                inline for ("ul(") |expect| {
+                    next(data, &idx) catch break :scan;
+                    if (data[idx] != expect) {
+                        break :redo;
+                    }
+                }
                 // Found 'mul(', now scan for number
                 next(data, &idx) catch break :scan;
                 const a = scanNumber(data, &idx) catch break :scan;
@@ -115,12 +109,12 @@ fn day3p2(data: []const u8) !usize {
                         enabled = true;
                     },
                     'n' => {
-                        next(data, &idx) catch break :scan;
-                        if (data[idx] != '\'') break :redo;
-                        next(data, &idx) catch break :scan;
-                        if (data[idx] != 't') break :redo;
-                        next(data, &idx) catch break :scan;
-                        if (data[idx] != '(') break :redo;
+                        inline for ("'t(") |expect| {
+                            next(data, &idx) catch break :scan;
+                            if (data[idx] != expect) {
+                                break :redo;
+                            }
+                        }
                         // Found 'don't('
                         next(data, &idx) catch break :scan;
                         if (data[idx] != ')') break :redo;
