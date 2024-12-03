@@ -110,12 +110,10 @@ pub fn main() !void {
 
 test "day2" {
     const result = try day2(input_test);
-    std.debug.print("result: {}\n", .{result});
     try std.testing.expect(result == 2);
 }
 
 test "day2p2" {
     const result = try day2p2(input_test);
-    std.debug.print("result: {}\n", .{result});
     try std.testing.expect(result == 4);
 }
