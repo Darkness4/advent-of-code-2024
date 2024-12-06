@@ -10,22 +10,21 @@ var fba = std.heap.FixedBufferAllocator.init(&buffer);
 const allocator = fba.allocator();
 const max_len = 100;
 
-// scanner from day3
-fn scanNumber(data: []const u8, idx: *usize) usize {
-    var number: usize = 0;
+// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
+// since we ignore '-' and other characters that could define a number. A very
+// naive implementation, yet the fastest for Advent of Code.
+fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
+    var number: ?T = null;
     if (idx.* >= data.len) return number;
-    var char = data[idx.*];
+    var char = data[@as(usize, @intCast(idx.*))];
     while (char >= '0' and char <= '9') {
-        number = number * 10 + (char - '0');
-        next(data, idx) catch return number;
-        char = data[idx.*];
+        const v = char - '0';
+        number = if (number == null) v else number.? * 10 + (char - '0');
+        idx.* += 1;
+        if (idx.* >= data.len) break;
+        char = data[@as(usize, @intCast(idx.*))];
     }
     return number;
-}
-
-fn next(data: []const u8, idx: *usize) !void {
-    idx.* += 1;
-    if (idx.* >= data.len) return error.EOF;
 }
 
 fn day5(data: []const u8) !u64 {
@@ -40,9 +39,9 @@ fn day5(data: []const u8) !u64 {
         if (line.len == 0) break;
 
         var idx: usize = 0;
-        const k = scanNumber(line, &idx);
-        try next(line, &idx);
-        const v = scanNumber(line, &idx);
+        const k = scanNumber(usize, line, &idx) orelse unreachable;
+        idx += 1;
+        const v = scanNumber(usize, line, &idx) orelse unreachable;
         rules[k][v] = true;
     }
 
@@ -56,7 +55,7 @@ fn day5(data: []const u8) !u64 {
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
-            const n = scanNumber(line, &idx);
+            const n = scanNumber(usize, line, &idx) orelse unreachable;
             try pages.append(n);
         }
 
@@ -96,9 +95,9 @@ fn day5p2(data: []const u8) !u64 {
         if (line.len == 0) break;
 
         var idx: usize = 0;
-        const k = scanNumber(line, &idx);
-        try next(line, &idx);
-        const v = scanNumber(line, &idx);
+        const k = scanNumber(usize, line, &idx) orelse unreachable;
+        idx += 1;
+        const v = scanNumber(usize, line, &idx) orelse unreachable;
         rules[k][v] = true;
     }
 
@@ -112,7 +111,7 @@ fn day5p2(data: []const u8) !u64 {
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
-            const n = scanNumber(line, &idx);
+            const n = scanNumber(usize, line, &idx) orelse unreachable;
             try pages.append(n);
         }
 
@@ -146,8 +145,6 @@ fn day5p2(data: []const u8) !u64 {
 
     return acc;
 }
-
-// 923.028us  980.157us  1.006ms
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();

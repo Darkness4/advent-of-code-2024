@@ -5,18 +5,34 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day2.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day2_test.txt"), "\n");
 
+// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
+// since we ignore '-' and other characters that could define a number. A very
+// naive implementation, yet the fastest for Advent of Code.
+fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
+    var number: ?T = null;
+    if (idx.* >= data.len) return number;
+    var char = data[@as(usize, @intCast(idx.*))];
+    while (char >= '0' and char <= '9') {
+        const v = char - '0';
+        number = if (number == null) v else number.? * 10 + (char - '0');
+        idx.* += 1;
+        if (idx.* >= data.len) break;
+        char = data[@as(usize, @intCast(idx.*))];
+    }
+    return number;
+}
+
 fn day2(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var acc: u64 = 0;
 
     line: while (lines.next()) |line| {
-        var levels = std.mem.splitScalar(u8, line, ' ');
-        var last: i64 = try std.fmt.parseInt(i64, levels.next().?, 10);
+        var scan_idx: i64 = 0;
+        var last: i64 = scanNumber(i64, line, &scan_idx) orelse unreachable;
+        scan_idx += 1;
         var last_diff: i64 = 0;
-        while (levels.next()) |level| {
-            const l = try std.fmt.parseInt(i64, level, 10);
-
+        while (scanNumber(i64, line, &scan_idx)) |l| : (scan_idx += 1) {
             // Second char or after
             const diff = l - last;
 
@@ -33,6 +49,11 @@ fn day2(data: []const u8) !u64 {
     }
 
     return acc;
+}
+
+fn absSub(a: usize, b: usize) usize {
+    if (a > b) return a - b;
+    return b - a;
 }
 
 fn day2p2(data: []const u8) !usize {

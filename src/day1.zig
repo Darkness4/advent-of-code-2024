@@ -5,35 +5,57 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day1.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day1_test.txt"), "\n");
 
-fn day1(data: []const u8) !u64 {
+// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
+// since we ignore '-' and other characters that could define a number. A very
+// naive implementation, yet the fastest for Advent of Code.
+fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
+    var number: ?T = null;
+    if (idx.* >= data.len) return number;
+    var char = data[@as(usize, @intCast(idx.*))];
+    while (char >= '0' and char <= '9') {
+        const v = char - '0';
+        number = if (number == null) v else number.? * 10 + (char - '0');
+        idx.* += 1;
+        if (idx.* >= data.len) break;
+        char = data[@as(usize, @intCast(idx.*))];
+    }
+    return number;
+}
+
+fn day1(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var list_a: [1000]i64 = undefined;
-    var list_b: [1000]i64 = undefined;
+    var list_a: [1000]usize = undefined;
+    var list_b: [1000]usize = undefined;
 
     // Read two columns of numbers
     var idx: usize = 0;
     while (lines.next()) |line| : (idx += 1) {
-        var groups = std.mem.splitSequence(u8, line, "   ");
-
-        list_a[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
-        list_b[idx] = try std.fmt.parseInt(i64, groups.next().?, 10);
+        var ch_idx: usize = 0;
+        list_a[idx] = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        ch_idx += 3;
+        list_b[idx] = scanNumber(usize, line, &ch_idx) orelse unreachable;
     }
     const cap = idx;
     const slice_a = list_a[0..cap];
     const slice_b = list_b[0..cap];
 
     // Sort the lists (using pdq, which is used by Go)
-    std.sort.pdq(i64, slice_a, {}, comptime std.sort.asc(i64));
-    std.sort.pdq(i64, slice_b, {}, comptime std.sort.asc(i64));
+    std.sort.pdq(usize, slice_a, {}, comptime std.sort.asc(usize));
+    std.sort.pdq(usize, slice_b, {}, comptime std.sort.asc(usize));
 
     // Compute the distance
-    var acc: u64 = 0;
+    var acc: usize = 0;
     for (list_a, list_b) |a, b| {
-        acc += @abs(a - b);
+        acc += absSub(a, b);
     }
 
     return acc;
+}
+
+fn absSub(a: usize, b: usize) usize {
+    if (a > b) return a - b;
+    return b - a;
 }
 
 fn day1p2(data: []const u8) !usize {
@@ -45,9 +67,10 @@ fn day1p2(data: []const u8) !usize {
     // Read two columns of numbers
     var idx: usize = 0;
     while (lines.next()) |line| : (idx += 1) {
-        var groups = std.mem.splitSequence(u8, line, "   ");
-        const a = try std.fmt.parseInt(usize, groups.next().?, 10);
-        const b = try std.fmt.parseInt(usize, groups.next().?, 10);
+        var ch_idx: usize = 0;
+        const a = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        ch_idx += 3;
+        const b = scanNumber(usize, line, &ch_idx) orelse unreachable;
         list_a[idx] = a;
         occurrences[b] += 1;
     }
