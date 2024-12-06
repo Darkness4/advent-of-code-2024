@@ -10,9 +10,9 @@ var fba = std.heap.FixedBufferAllocator.init(&buffer);
 const allocator = fba.allocator();
 const max_len = 100;
 
-// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
-// since we ignore '-' and other characters that could define a number. A very
-// naive implementation, yet the fastest for Advent of Code.
+/// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
+/// since we ignore '-' and other characters that could define a number (like hex, etc...).
+/// A very naive implementation, yet the fastest for Advent of Code.
 fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
     var number: ?T = null;
     if (idx.* >= data.len) return number;
