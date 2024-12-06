@@ -48,26 +48,26 @@ fn day5(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var parsed_nums = try std.ArrayList(usize).initCapacity(allocator, 25);
-    defer parsed_nums.deinit();
+    var pages = try std.ArrayList(usize).initCapacity(allocator, 25);
+    defer pages.deinit();
     while (lines.next()) |line| {
-        defer parsed_nums.clearRetainingCapacity();
+        defer pages.clearRetainingCapacity();
 
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
             const n = scanNumber(line, &idx);
-            try parsed_nums.append(n);
+            try pages.append(n);
         }
 
         var is_valid = true;
         // For each items
         check_constraints: for (
             0..,
-            parsed_nums.items,
+            pages.items,
         ) |cursor, i| {
             // Check if the items before the cursor are supposed to be after the current item.
-            for (parsed_nums.items[0..cursor]) |j| {
+            for (pages.items[0..cursor]) |j| {
                 if (rules[i][j]) {
                     is_valid = false;
                     break :check_constraints;
@@ -76,8 +76,8 @@ fn day5(data: []const u8) !u64 {
         }
 
         if (is_valid) {
-            const mid_idx = parsed_nums.items.len / 2;
-            acc += parsed_nums.items[mid_idx];
+            const mid_idx = pages.items.len / 2;
+            acc += pages.items[mid_idx];
         }
     }
 
@@ -104,70 +104,50 @@ fn day5p2(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var parsed_nums = try std.ArrayList(usize).initCapacity(allocator, 25);
-    defer parsed_nums.deinit();
+    var pages = try std.ArrayList(usize).initCapacity(allocator, 25);
+    defer pages.deinit();
     while (lines.next()) |line| {
-        defer parsed_nums.clearRetainingCapacity();
+        defer pages.clearRetainingCapacity();
 
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
             const n = scanNumber(line, &idx);
-            try parsed_nums.append(n);
+            try pages.append(n);
         }
 
-        // For each items
-        var is_valid = true;
-        check_constraints: for (
-            0..,
-            parsed_nums.items,
-        ) |cursor, i| {
-            // Check if the items before the cursor are supposed to be after the current item.
-            for (parsed_nums.items[0..cursor]) |j| {
-                if (rules[i][j]) {
-                    is_valid = false;
-                    break :check_constraints;
+        var is_valid = false;
+        // Flag to add the middle element at the end of the resolution.
+        var was_invalid = false;
+        redo: while (!is_valid) {
+            is_valid = true;
+            // For each items
+            for (0.., pages.items) |cursor, i| {
+                // Check if the items before the cursor are supposed to be after the current item.
+                for (0.., pages.items[0..cursor]) |j_idx, j| {
+                    if (rules[i][j]) {
+                        is_valid = false;
+                        was_invalid = true;
+                        // Pop the item before i and insert it after i (at the end).
+                        const item = j;
+                        std.mem.copyForwards(usize, pages.items[j_idx..], pages.items[j_idx + 1 ..]);
+                        pages.items[pages.items.len - 1] = item;
+                        continue :redo;
+                    }
                 }
             }
-        }
 
-        if (!is_valid) {
-            // Sort
-            fix(usize, parsed_nums.items, rules);
-
-            const mid_idx = parsed_nums.items.len / 2;
-            acc += parsed_nums.items[mid_idx];
+            if (was_invalid) {
+                const mid_idx = pages.items.len / 2;
+                acc += pages.items[mid_idx];
+            }
         }
     }
 
     return acc;
 }
 
-// Solve by moving the items that are not valid.
-fn fix(comptime T: type, items: []T, rules: [max_len][max_len]bool) void {
-    var is_valid = false;
-    while (!is_valid) {
-        // For each items
-        check_constraints: for (
-            0..,
-            items,
-        ) |cursor, i| {
-            // Check if the items before the cursor are supposed to be after the current item.
-            for (0.., items[0..cursor]) |j_idx, j| {
-                if (rules[i][j]) {
-                    // j is supposed to be after i
-                    // Pop and append j
-                    is_valid = false;
-                    const item = j;
-                    std.mem.copyForwards(T, items[j_idx..], items[j_idx + 1 ..]);
-                    items[items.len - 1] = item;
-                    break :check_constraints;
-                }
-            }
-            is_valid = true;
-        }
-    }
-}
+// 923.028us  980.157us  1.006ms
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
