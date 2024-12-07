@@ -5,10 +5,6 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day4.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day4_test.txt"), "\n");
 
-var buffer: [140 * 140 * 8 * 4 + 140]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const allocator = fba.allocator();
-
 const Pos = struct {
     x: usize,
     y: usize,
@@ -29,6 +25,10 @@ const dirs = [_]Vec2{
     Vec2{ .x = 1, .y = 0 },
     Vec2{ .x = 1, .y = -1 },
 };
+
+var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
+var fba = std.heap.FixedBufferAllocator.init(&buffer);
+const allocator = fba.allocator();
 
 const mas = "MAS";
 

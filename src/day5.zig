@@ -5,7 +5,7 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day5.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day5_test.txt"), "\n");
 
-var buffer: [26 * 8]u8 = undefined;
+var buffer: [26 * @sizeOf(usize)]u8 = undefined;
 var fba = std.heap.FixedBufferAllocator.init(&buffer);
 const allocator = fba.allocator();
 const max_len = 100;
