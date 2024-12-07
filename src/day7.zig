@@ -26,28 +26,46 @@ fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
     return number;
 }
 
-fn compute(expected: usize, equation: []usize, idx: usize) !usize {
+/// Resolve the operators of the equation.
+///
+/// 'with_concat' is only used for part 2. It allows to test if we can concatenate two numbers.
+fn resolve(expected: usize, equation: []usize, idx: usize, with_concat: bool) !void {
     if (idx == 0) {
         if (expected == equation[idx]) {
-            return expected;
+            return;
         }
 
         return error.InvalidEquation;
     }
-    // Test if divisible. If so, branch it off and test both '-' and '/' hypothesis.
+    // Test if divisible. If so, branch it off and test both '-', 'split' and '/' hypothesis.
     if (expected % equation[idx] == 0) {
         const new_expected = expected / equation[idx];
-        if (compute(new_expected, equation, idx - 1)) |test_value| {
-            return test_value;
-        } else |_| {
-            // Hypothesis '/' failed, so we try with '-'.
+        blk: {
+            resolve(new_expected, equation, idx - 1, with_concat) catch {
+                // Hypothesis '/' failed, so we try with 'split'.
+                break :blk;
+            };
+            return;
         }
     }
+
+    // Test if we can concatenate the two numbers.
+    if (with_concat and numberEndsWith(usize, expected, equation[idx])) {
+        const new_expected = mustRemoveEndsWith(usize, expected, equation[idx]);
+        blk: {
+            resolve(new_expected, equation, idx - 1, with_concat) catch {
+                // Hypothesis 'split' failed, so we try with '-'.
+                break :blk;
+            };
+            return;
+        }
+    }
+
     const new_expected, const overflow: u1 = @subWithOverflow(expected, equation[idx]);
     if (overflow == 1) { // The equation is not correct
         return error.InvalidEquation;
     }
-    return try compute(new_expected, equation, idx - 1);
+    return resolve(new_expected, equation, idx - 1, with_concat);
 }
 
 fn day7(data: []const u8) !usize {
@@ -72,7 +90,7 @@ fn day7(data: []const u8) !usize {
         // Read in reverse to be able to test values!
         // Since equation is evaluated left-to-right. To "resolve" the equation, we need to
         // read it right-to-left.
-        _ = compute(result, equation.items, equation.items.len - 1) catch {
+        resolve(result, equation.items, equation.items.len - 1, false) catch {
             continue :equations;
         };
         acc += result;
@@ -127,41 +145,6 @@ test "removeEndsWith" {
     };
 }
 
-fn computeWithConcat(expected: usize, equation: []usize, idx: usize) !usize {
-    if (idx == 0) {
-        if (expected == equation[idx]) {
-            return expected;
-        }
-
-        return error.InvalidEquation;
-    }
-    // Test if divisible. If so, branch it off and test both '-', 'split' and '/' hypothesis.
-    if (expected % equation[idx] == 0) {
-        const new_expected = expected / equation[idx];
-        if (computeWithConcat(new_expected, equation, idx - 1)) |test_value| {
-            return test_value;
-        } else |_| {
-            // Hypothesis '/' failed, so we try with 'split'.
-        }
-    }
-
-    // Test if we can concatenate the two numbers.
-    if (numberEndsWith(usize, expected, equation[idx])) {
-        const new_expected = mustRemoveEndsWith(usize, expected, equation[idx]);
-        if (computeWithConcat(new_expected, equation, idx - 1)) |test_value| {
-            return test_value;
-        } else |_| {
-            // Hypothesis 'split' failed, so we try with '-'.
-        }
-    }
-
-    const new_expected, const overflow: u1 = @subWithOverflow(expected, equation[idx]);
-    if (overflow == 1) { // The equation is not correct
-        return error.InvalidEquation;
-    }
-    return try computeWithConcat(new_expected, equation, idx - 1);
-}
-
 fn day7p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
@@ -184,7 +167,7 @@ fn day7p2(data: []const u8) !usize {
         // Read in reverse to be able to test values!
         // Since equation is evaluated left-to-right. To "resolve" the equation, we need to
         // read it right-to-left.
-        _ = computeWithConcat(result, equation.items, equation.items.len - 1) catch {
+        resolve(result, equation.items, equation.items.len - 1, true) catch {
             continue :equations;
         };
         acc += result;
