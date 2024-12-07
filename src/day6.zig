@@ -7,7 +7,10 @@ const input_test = std.mem.trimRight(u8, @embedFile("day6_test.txt"), "\n");
 
 var buffer: [201 * 201 * @sizeOf(u8) * @sizeOf([]u8)]u8 = undefined;
 var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const global_allocator = fba.allocator();
+const fba_allocator = fba.allocator();
+
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const gpa_allocator = gpa.allocator();
 
 const MapError = error{
     InvalidFormat,
@@ -23,9 +26,6 @@ const Pos = struct {
         return self.x == other.x and self.y == other.y;
     }
 };
-
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const unlimited_allocator = gpa.allocator();
 
 const Map = struct {
     data: [][]u8,
@@ -94,15 +94,6 @@ const Vec2 = struct {
     }
 };
 
-const PosVec2 = struct {
-    pos: Pos,
-    dir: Vec2,
-
-    pub fn eql(self: PosVec2, other: PosVec2) bool {
-        return self.pos.eql(other.pos) and self.dir.eql(other.dir);
-    }
-};
-
 const dirs = [_]Vec2{
     .{ .x = -1, .y = 0 }, // Up
     .{ .x = 0, .y = 1 }, // Right
@@ -142,7 +133,7 @@ fn day6(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     const size = std.mem.indexOfScalar(u8, data, '\n') orelse return MapError.InvalidFormat;
-    var map = try Map.init(global_allocator, size);
+    var map = try Map.init(fba_allocator, size);
     defer map.deinit();
 
     // Read the map
@@ -175,6 +166,19 @@ fn day6(data: []const u8) !u64 {
     return acc;
 }
 
+fn AutoHashSet(comptime T: type) type {
+    return std.AutoHashMap(T, void);
+}
+
+const PosVec2 = struct {
+    pos: Pos,
+    dir: Vec2,
+
+    pub fn eql(self: PosVec2, other: PosVec2) bool {
+        return self.pos.eql(other.pos) and self.dir.eql(other.dir);
+    }
+};
+
 fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(Pos)) !Pos {
     var last_pos = pos;
     var new_pos = pos;
@@ -203,7 +207,7 @@ fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(P
     return new_pos;
 }
 
-fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *std.AutoHashMap(PosVec2, bool)) !Pos {
+fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *AutoHashSet(PosVec2)) !Pos {
     var last_pos = pos;
     var new_pos = pos;
     while (new_pos.x > 0 and new_pos.x < map.size - 1 and new_pos.y > 0 and new_pos.y < map.size - 1) {
@@ -213,7 +217,7 @@ fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *std.AutoHashMap(Po
         }
 
         // Register to history
-        try visited.put(.{ .pos = new_pos, .dir = dir }, true);
+        try visited.put(.{ .pos = new_pos, .dir = dir }, {});
 
         // Update new_pod
         last_pos = new_pos;
@@ -226,7 +230,7 @@ fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *std.AutoHashMap(Po
         }
     }
     // Register last position to history
-    try visited.put(.{ .pos = new_pos, .dir = dir }, true);
+    try visited.put(.{ .pos = new_pos, .dir = dir }, {});
     if (new_pos.x == 0 or new_pos.x == map.size - 1 or new_pos.y == 0 or new_pos.y == map.size - 1) {
         return MapError.BoundaryReached;
     }
@@ -241,7 +245,7 @@ fn day6p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     const size = std.mem.indexOfScalar(u8, data, '\n') orelse return MapError.InvalidFormat;
-    var map = try Map.init(global_allocator, size);
+    var map = try Map.init(fba_allocator, size);
     defer map.deinit();
 
     // Read the map
@@ -274,7 +278,7 @@ fn day6p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
     // std.debug.print("obstacles.len: {}\n", .{obstacles.items.len}); // Should match the solution of part 1.
 
     var acc: u64 = 0;
-    var visited = std.AutoHashMap(PosVec2, bool).init(allocator);
+    var visited = AutoHashSet(PosVec2).init(allocator);
     defer visited.deinit();
     for (obstacles.items[1..]) |obs_pos| { // Ignore the starting point.
         visited.clearRetainingCapacity();
@@ -307,12 +311,12 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day6(input);
     const p1_time = timer.lap();
-    const result_p2 = try day6p2(unlimited_allocator, input);
+    const result_p2 = try day6p2(gpa_allocator, input);
     const p2_time = timer.read();
     std.debug.print("day6 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day6 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(unlimited_allocator, .{
+    var bench = zbench.Benchmark.init(gpa_allocator, .{
         .track_allocations = true,
         .iterations = 5,
     });
@@ -340,7 +344,7 @@ test "day6" {
 }
 
 test "day6p2" {
-    const result = try day6p2(unlimited_allocator, input_test);
+    const result = try day6p2(gpa_allocator, input_test);
     const expect = 6;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
