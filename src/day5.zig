@@ -5,9 +5,6 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day5.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day5_test.txt"), "\n");
 
-var buffer: [26 * @sizeOf(usize)]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const allocator = fba.allocator();
 const max_len = 100;
 
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
@@ -29,6 +26,10 @@ fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
 
 fn day5(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [26 * @sizeOf(usize)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var rules = [_][max_len]bool{
         [_]bool{false} ** max_len,
@@ -85,6 +86,10 @@ fn day5(data: []const u8) !u64 {
 
 fn day5p2(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [26 * @sizeOf(usize)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var rules = [_][max_len]bool{
         [_]bool{false} ** max_len,

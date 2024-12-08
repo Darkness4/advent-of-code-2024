@@ -5,10 +5,6 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day6.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day6_test.txt"), "\n");
 
-var buffer: [201 * 201 * @sizeOf(u8) * @sizeOf([]u8)]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const fba_allocator = fba.allocator();
-
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const gpa_allocator = gpa.allocator();
 
@@ -132,6 +128,10 @@ fn moveAndAccumulate(map: Map, pos: Pos, dir: Vec2, acc: *usize) !Pos {
 fn day6(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
+    var buffer: [201 * 201 * @sizeOf(u8) * @sizeOf([]u8)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
     const size = std.mem.indexOfScalar(u8, data, '\n') orelse return MapError.InvalidFormat;
     var map = try Map.init(fba_allocator, size);
     defer map.deinit();
@@ -243,6 +243,10 @@ fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *AutoHashSet(PosVec
 // 2. Detect loops: A loop is detected by building an history of pos+dir and check if the new pos+dir appears in the history.
 fn day6p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [201 * 201 * @sizeOf(u8) * @sizeOf([]u8)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
 
     const size = std.mem.indexOfScalar(u8, data, '\n') orelse return MapError.InvalidFormat;
     var map = try Map.init(fba_allocator, size);

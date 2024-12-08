@@ -5,10 +5,6 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day7.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day7_test.txt"), "\n");
 
-var buffer: [31 * @sizeOf(usize)]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const allocator = fba.allocator();
-
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
 /// A very naive implementation, yet the fastest for Advent of Code.
@@ -70,6 +66,10 @@ fn resolve(expected: usize, equation: []usize, idx: usize, with_concat: bool) !v
 
 fn day7(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [31 * @sizeOf(usize)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var equation = try std.ArrayList(usize).initCapacity(allocator, 30);
     defer equation.deinit();
@@ -147,6 +147,10 @@ test "removeEndsWith" {
 
 fn day7p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [31 * @sizeOf(usize)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var equation = try std.ArrayList(usize).initCapacity(allocator, 30);
     defer equation.deinit();

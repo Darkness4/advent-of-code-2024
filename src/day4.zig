@@ -26,14 +26,14 @@ const dirs = [_]Vec2{
     Vec2{ .x = 1, .y = -1 },
 };
 
-var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&buffer);
-const allocator = fba.allocator();
-
 const mas = "MAS";
 
 fn day4(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var rows = try std.ArrayList([]const u8).initCapacity(allocator, 140);
     defer rows.deinit();
@@ -77,6 +77,10 @@ fn day4(data: []const u8) !u64 {
 
 fn day4p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const allocator = fba.allocator();
 
     var rows = try std.ArrayList([]const u8).initCapacity(allocator, 140);
     defer rows.deinit();
