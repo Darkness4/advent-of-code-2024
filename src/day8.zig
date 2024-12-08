@@ -23,7 +23,7 @@ const Pos = struct {
 
     /// This returns an owned slice, no need to deinit it.
     fn compute_antinode_pos_by_repeat(self: Pos, other: Pos, max: usize, allocator: std.mem.Allocator) ![]Pos {
-        var list = std.ArrayList(Pos).init(allocator);
+        var list = try std.ArrayList(Pos).initCapacity(allocator, max);
         defer list.deinit();
 
         for (0..max) |n| {
@@ -35,7 +35,7 @@ const Pos = struct {
             if (overflow == 1 or y >= max) {
                 return list.toOwnedSlice();
             }
-            try list.append(.{ .x = x, .y = y });
+            list.appendAssumeCapacity(.{ .x = x, .y = y });
         }
 
         return list.toOwnedSlice();
