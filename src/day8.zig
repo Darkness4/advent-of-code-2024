@@ -87,19 +87,13 @@ fn day8(allocator: std.mem.Allocator, data: []const u8) !usize {
         for (0.., list.items) |i, a| {
             for (i + 1..list.items.len) |j| {
                 const b = list.items[j];
-                blk: {
-                    const pos = a.compute_antinode_pos_by_symmetry(b, size) catch {
-                        break :blk;
-                    };
+                if (a.compute_antinode_pos_by_symmetry(b, size)) |pos| {
                     try antinodes.put(pos, {});
-                }
+                } else |_| {}
 
-                blk: {
-                    const pos = b.compute_antinode_pos_by_symmetry(a, size) catch {
-                        break :blk;
-                    };
+                if (b.compute_antinode_pos_by_symmetry(a, size)) |pos| {
                     try antinodes.put(pos, {});
-                }
+                } else |_| {}
             }
         }
     }
