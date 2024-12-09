@@ -10,60 +10,49 @@ const Bucket = struct {
     capacity: usize,
 };
 
-// Making buckets. Everything is given in the intro.
+// Using big buffers as illustrated in the intro.
 fn day9(data: []const u8) !usize {
-    var buffer: [100000 * @sizeOf(Bucket)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
-    var buckets = try std.ArrayList(Bucket).initCapacity(allocator, 100000);
-    defer buckets.deinit();
+    var buffer = [_]usize{0} ** 100000;
 
     // Step 1: Parse input
+    var write_idx: usize = 0;
     for (0.., data) |idx, c| {
         if (idx % 2 == 0) {
-            buckets.appendAssumeCapacity(.{ .id = idx / 2, .capacity = @as(usize, @intCast(c - '0')) });
+            for (0..@intCast(c - '0')) |_| {
+                buffer[write_idx] = (idx / 2) + 1;
+                write_idx += 1;
+            }
         } else {
-            buckets.appendAssumeCapacity(.{ .id = null, .capacity = @as(usize, @intCast(c - '0')) });
+            for (0..@intCast(c - '0')) |_| {
+                buffer[write_idx] = 0;
+                write_idx += 1;
+            }
         }
     }
+    const cap = write_idx;
 
     // Step 2: Execute litterally the algorithm.
-    var filled_bucket_idx: usize = buckets.items.len;
-    while (filled_bucket_idx > 0) {
-        filled_bucket_idx -= 1;
-        var empty_bucket_idx: usize = 1;
-        while (empty_bucket_idx < filled_bucket_idx) : (empty_bucket_idx += 1) {
-            const empty_bucket = &buckets.items[empty_bucket_idx];
-            const filled_bucket = &buckets.items[filled_bucket_idx];
+    var filled_idx: usize = cap - 1;
+    var empty_idx: usize = 0;
+    while (empty_idx < filled_idx) : (empty_idx += 1) {
+        const empty = buffer[empty_idx];
+        const filled = buffer[filled_idx];
 
-            if (empty_bucket.id == null and filled_bucket.id != null) {
-                if (filled_bucket.capacity <= empty_bucket.capacity) {
-                    const id = filled_bucket.id;
-                    filled_bucket.*.id = null;
-                    empty_bucket.*.capacity -= filled_bucket.capacity; // Reduce capacity of empty bucket.
-                    buckets.insertAssumeCapacity(empty_bucket_idx, .{ .id = id, .capacity = filled_bucket.capacity });
-                } else {
-                    empty_bucket.*.id = filled_bucket.id;
-                    filled_bucket.*.capacity -= empty_bucket.capacity; // Reduce capacity of filled bucket.
-                }
-            }
+        if (empty == 0 and filled != 0) {
+            buffer[empty_idx] = filled;
+            buffer[filled_idx] = 0;
+
+            while (buffer[filled_idx] == 0) filled_idx -= 1;
         }
     }
 
     var acc: usize = 0;
-    var idx: usize = 0;
-    for (buckets.items) |item| {
-        if (item.id == null) {
-            // idx += item.capacity; // No need, everything is compressed.
+    for (0..cap) |idx| {
+        if (buffer[idx] == 0) {
             break;
         }
-        for (0..item.capacity) |block_idx| {
-            acc += (block_idx + idx) * item.id.?;
-        }
-        idx += item.capacity;
+        acc += (buffer[idx] - 1) * idx;
     }
-
     return acc;
 }
 
