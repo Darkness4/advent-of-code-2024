@@ -113,7 +113,9 @@ pub fn main() !void {
     std.debug.print("day9 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day9 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
+        .time_budget_ns = 10e9,
+    });
     defer bench.deinit();
     try bench.add("day9 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
