@@ -38,7 +38,7 @@ fn day9(data: []const u8) !usize {
         const empty = buffer[empty_idx];
         const filled = buffer[filled_idx];
 
-        if (empty == 0 and filled != 0) {
+        if (empty == 0) {
             buffer[empty_idx] = filled;
             buffer[filled_idx] = 0;
 
@@ -57,13 +57,9 @@ fn day9(data: []const u8) !usize {
 }
 
 // Making buckets. Everything is given in the intro.
+// Using this method is slower than the previous one but is easier to implement.
 fn day9p2(data: []const u8) !usize {
-    var buffer: [100000 * @sizeOf(Bucket)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
-    var buckets = try std.ArrayList(Bucket).initCapacity(allocator, 100000);
-    defer buckets.deinit();
+    var buckets = std.BoundedArray(Bucket, 100000){};
 
     // Step 1: Parse input
     for (0.., data) |idx, c| {
@@ -75,26 +71,26 @@ fn day9p2(data: []const u8) !usize {
     }
 
     // Step 2: Execute litterally the algorithm.
-    var filled_bucket_idx: usize = buckets.items.len;
+    var filled_bucket_idx: usize = buckets.len;
     while (filled_bucket_idx > 0) {
         filled_bucket_idx -= 1;
         var empty_bucket_idx: usize = 1;
         while (empty_bucket_idx < filled_bucket_idx) : (empty_bucket_idx += 1) {
-            const empty_bucket = &buckets.items[empty_bucket_idx];
-            const filled_bucket = &buckets.items[filled_bucket_idx];
+            const empty_bucket = &buckets.buffer[empty_bucket_idx];
+            const filled_bucket = &buckets.buffer[filled_bucket_idx];
 
             if (empty_bucket.id == null and filled_bucket.id != null and filled_bucket.capacity <= empty_bucket.capacity) {
                 const id = filled_bucket.id;
                 filled_bucket.*.id = null;
                 empty_bucket.*.capacity -= filled_bucket.capacity; // Reduce capacity of empty bucket.
-                buckets.insertAssumeCapacity(empty_bucket_idx, .{ .id = id, .capacity = filled_bucket.capacity });
+                try buckets.insert(empty_bucket_idx, .{ .id = id, .capacity = filled_bucket.capacity });
             }
         }
     }
 
     var acc: usize = 0;
     var idx: usize = 0;
-    for (buckets.items) |item| {
+    for (buckets.slice()) |item| {
         if (item.id == null) {
             idx += item.capacity;
             continue;

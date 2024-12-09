@@ -27,10 +27,6 @@ fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
 fn day5(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [26 * @sizeOf(usize)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
     var rules = [_][max_len]bool{
         [_]bool{false} ** max_len,
     } ** max_len;
@@ -48,26 +44,26 @@ fn day5(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var pages = try std.ArrayList(usize).initCapacity(allocator, 25);
-    defer pages.deinit();
+    var pages = std.BoundedArray(usize, 25){};
     while (lines.next()) |line| {
-        defer pages.clearRetainingCapacity();
+        defer pages.clear();
 
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
             const n = scanNumber(usize, line, &idx) orelse unreachable;
-            try pages.append(n);
+            pages.appendAssumeCapacity(n);
         }
+        const pages_slice = pages.slice();
 
         var is_valid = true;
         // For each items
         check_constraints: for (
             0..,
-            pages.items,
+            pages_slice,
         ) |cursor, i| {
             // Check if the items before the cursor are supposed to be after the current item.
-            for (pages.items[0..cursor]) |j| {
+            for (pages_slice[0..cursor]) |j| {
                 if (rules[i][j]) {
                     is_valid = false;
                     break :check_constraints;
@@ -76,8 +72,8 @@ fn day5(data: []const u8) !u64 {
         }
 
         if (is_valid) {
-            const mid_idx = pages.items.len / 2;
-            acc += pages.items[mid_idx];
+            const mid_idx = pages_slice.len / 2;
+            acc += pages_slice[mid_idx];
         }
     }
 
@@ -87,10 +83,6 @@ fn day5(data: []const u8) !u64 {
 fn day5p2(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [26 * @sizeOf(usize)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
     var rules = [_][max_len]bool{
         [_]bool{false} ** max_len,
     } ** max_len;
@@ -108,17 +100,17 @@ fn day5p2(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var pages = try std.ArrayList(usize).initCapacity(allocator, 25);
-    defer pages.deinit();
+    var pages = std.BoundedArray(usize, 25){};
     while (lines.next()) |line| {
-        defer pages.clearRetainingCapacity();
+        defer pages.clear();
 
         // Read everything
         var idx: usize = 0;
         while (idx < line.len) : (idx += 1) {
             const n = scanNumber(usize, line, &idx) orelse unreachable;
-            try pages.append(n);
+            pages.appendAssumeCapacity(n);
         }
+        const pages_slice = pages.slice();
 
         var is_valid = false;
         // Flag to add the middle element at the end of the resolution.
@@ -126,24 +118,24 @@ fn day5p2(data: []const u8) !u64 {
         redo: while (!is_valid) {
             is_valid = true;
             // For each items
-            for (0.., pages.items) |cursor, i| {
+            for (0.., pages_slice) |cursor, i| {
                 // Check if the items before the cursor are supposed to be after the current item.
-                for (0.., pages.items[0..cursor]) |j_idx, j| {
+                for (0.., pages_slice[0..cursor]) |j_idx, j| {
                     if (rules[i][j]) {
                         is_valid = false;
                         was_invalid = true;
                         // Pop the item before i and insert it after i (at the end).
                         const item = j;
-                        std.mem.copyForwards(usize, pages.items[j_idx..], pages.items[j_idx + 1 ..]);
-                        pages.items[pages.items.len - 1] = item;
+                        std.mem.copyForwards(usize, pages_slice[j_idx..], pages_slice[j_idx + 1 ..]);
+                        pages_slice[pages_slice.len - 1] = item;
                         continue :redo;
                     }
                 }
             }
 
             if (was_invalid) {
-                const mid_idx = pages.items.len / 2;
-                acc += pages.items[mid_idx];
+                const mid_idx = pages_slice.len / 2;
+                acc += pages_slice[mid_idx];
             }
         }
     }
