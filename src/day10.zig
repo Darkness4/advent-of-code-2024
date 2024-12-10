@@ -54,12 +54,16 @@ const SquareMatrix = struct {
     }
 };
 
+// DFS
 fn search(start: Pos, size: usize, matrix: SquareMatrix, visited: *AutoHashSet(Pos)) !usize {
+    // Ignore already visited path.
     if (visited.contains(start)) {
         return 0;
     }
     try visited.put(start, {});
     const startv = matrix.get(start.x, start.y);
+
+    // End of trail.
     if (startv == '9') {
         return 1;
     }
@@ -118,6 +122,7 @@ fn day10(allocator: std.mem.Allocator, data: []const u8) !usize {
     return acc;
 }
 
+// This time it's pure DFS.
 fn searchDistinct(start: Pos, size: usize, matrix: SquareMatrix) usize {
     const startv = matrix.get(start.x, start.y);
     if (startv == '9') {

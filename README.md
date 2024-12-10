@@ -51,6 +51,11 @@ day8 p2 [MEMORY]                               75.227KiB ± 0B         (75.227Ki
 
 day9 p1                8191     5.993s         731.774us ± 10.771us   (719.884us ... 1.119ms)      732.929us  750.512us  762.314us
 day9 p2                7        5.829s         832.723ms ± 3.468ms    (828.11ms ... 837.255ms)     835.11ms   837.255ms  837.255ms
+
+day10 p1               1023     1.179s         1.152ms ± 14.134us     (1.134ms ... 1.491ms)        1.155ms    1.175ms    1.178ms
+day10 p1 [MEMORY]                              1.641KiB ± 0B          (1.641KiB ... 1.641KiB)      1.641KiB   1.641KiB   1.641KiB
+day10 p2               4095     1.544s         377.062us ± 12.856us   (361.585us ... 639.642us)    378.657us  414.065us  447.859us
+day10 p2 [MEMORY]                              0B ± 0B                (0B ... 0B)                  0B         0B         0B
 ```
 
 ## Compatibility
