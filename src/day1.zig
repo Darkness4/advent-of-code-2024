@@ -11,13 +11,13 @@ const input_test = std.mem.trimRight(u8, @embedFile("day1_test.txt"), "\n");
 fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
     var number: ?T = null;
     if (idx.* >= data.len) return number;
-    var char = data[@as(usize, @intCast(idx.*))];
+    var char = data[@intCast(idx.*)];
     while (char >= '0' and char <= '9') {
         const v = char - '0';
         number = if (number == null) v else number.? * 10 + (char - '0');
         idx.* += 1;
         if (idx.* >= data.len) break;
-        char = data[@as(usize, @intCast(idx.*))];
+        char = data[@intCast(idx.*)];
     }
     return number;
 }

@@ -64,7 +64,7 @@ fn day4(data: []const u8) !u64 {
             }
 
             for (1..4) |norm| {
-                if (rows.items[@as(usize, @intCast(@as(i64, @intCast(x_pos.x)) + dir.x * @as(i64, @intCast(norm))))][@as(usize, @intCast(@as(i64, @intCast(x_pos.y)) + dir.y * @as(i64, @intCast(norm))))] != mas[norm - 1]) {
+                if (rows.items[@intCast(@as(i64, @intCast(x_pos.x)) + dir.x * @as(i64, @intCast(norm)))][@intCast(@as(i64, @intCast(x_pos.y)) + dir.y * @as(i64, @intCast(norm)))] != mas[norm - 1]) {
                     continue :dir;
                 }
             }

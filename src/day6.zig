@@ -110,8 +110,8 @@ fn moveAndAccumulate(map: Map, pos: Pos, dir: Vec2, acc: *usize) !Pos {
         // Update new_pod
         last_pos = new_pos;
         new_pos = .{
-            .x = @as(usize, @intCast(@as(isize, @intCast(new_pos.x)) + dir.x)),
-            .y = @as(usize, @intCast(@as(isize, @intCast(new_pos.y)) + dir.y)),
+            .x = @intCast(@as(isize, @intCast(new_pos.x)) + dir.x),
+            .y = @intCast(@as(isize, @intCast(new_pos.y)) + dir.y),
         };
         if (map.data[new_pos.x][new_pos.y] == '#') {
             return last_pos;
@@ -193,8 +193,8 @@ fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(P
         // Update new_pod
         last_pos = new_pos;
         new_pos = .{
-            .x = @as(usize, @intCast(@as(isize, @intCast(new_pos.x)) + dir.x)),
-            .y = @as(usize, @intCast(@as(isize, @intCast(new_pos.y)) + dir.y)),
+            .x = @intCast(@as(isize, @intCast(new_pos.x)) + dir.x),
+            .y = @intCast(@as(isize, @intCast(new_pos.y)) + dir.y),
         };
         if (map.data[new_pos.x][new_pos.y] == '#') {
             return last_pos;
@@ -222,8 +222,8 @@ fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *AutoHashSet(PosVec
         // Update new_pod
         last_pos = new_pos;
         new_pos = .{
-            .x = @as(usize, @intCast(@as(isize, @intCast(new_pos.x)) + dir.x)),
-            .y = @as(usize, @intCast(@as(isize, @intCast(new_pos.y)) + dir.y)),
+            .x = @intCast(@as(isize, @intCast(new_pos.x)) + dir.x),
+            .y = @intCast(@as(isize, @intCast(new_pos.y)) + dir.y),
         };
         if (map.data[new_pos.x][new_pos.y] == '#') {
             return last_pos;

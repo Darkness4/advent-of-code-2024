@@ -64,9 +64,9 @@ fn day9p2(data: []const u8) !usize {
     // Step 1: Parse input
     for (0.., data) |idx, c| {
         if (idx % 2 == 0) {
-            buckets.appendAssumeCapacity(.{ .id = idx / 2, .capacity = @as(usize, @intCast(c - '0')) });
+            buckets.appendAssumeCapacity(.{ .id = idx / 2, .capacity = @intCast(c - '0') });
         } else {
-            buckets.appendAssumeCapacity(.{ .id = null, .capacity = @as(usize, @intCast(c - '0')) });
+            buckets.appendAssumeCapacity(.{ .id = null, .capacity = @intCast(c - '0') });
         }
     }
 
