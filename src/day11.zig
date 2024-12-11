@@ -167,7 +167,7 @@ fn doWithCache(allocator: std.mem.Allocator, data: []const u8, count: usize) !us
                 new_entry.value_ptr.* += entry.value_ptr.*;
             }
 
-            // Decrease the count of current value
+            // Decrease the count of current value (immediatly as it won't impact the next iteration)
             entry.value_ptr.* = 0;
         }
 
