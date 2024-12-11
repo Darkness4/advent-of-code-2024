@@ -131,10 +131,9 @@ fn printHashMap(map: std.AutoHashMap(usize, isize)) void {
 }
 
 // Compress the list by hashing it. A legit use case for a hashmap.
-// Operations are also cached to avoid recomputing them.
 fn doWithCache(allocator: std.mem.Allocator, data: []const u8, count: usize) !usize {
     var compressed_list = std.AutoHashMap(usize, isize).init(allocator);
-    var cached_operations = std.AutoHashMap(usize, NewOrSplitResult).init(allocator);
+    defer compressed_list.deinit();
 
     // Read everything
     var ch_idx: usize = 0;
@@ -143,6 +142,7 @@ fn doWithCache(allocator: std.mem.Allocator, data: []const u8, count: usize) !us
         entry.value_ptr.* += 1;
     }
     var staging_list = std.AutoHashMap(usize, isize).init(allocator);
+    defer staging_list.deinit();
 
     for (0..count) |_| {
         staging_list.clearRetainingCapacity();
@@ -151,19 +151,8 @@ fn doWithCache(allocator: std.mem.Allocator, data: []const u8, count: usize) !us
         while (it.next()) |entry| {
             const stone = entry.key_ptr.*;
 
-            // Find operation from cache
-            const result = blk: {
-                if (cached_operations.get(stone)) |cached| {
-                    break :blk cached;
-                } else {
-                    // Apply rules
-                    const res = blink(stone);
-
-                    // Cache the operation
-                    try cached_operations.put(stone, res);
-                    break :blk res;
-                }
-            };
+            // Apply rules
+            const result = blink(stone);
 
             if (result.isSplit) {
                 // Increase the count of left and right
