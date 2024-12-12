@@ -61,6 +61,9 @@ day11 p1               255      1.54s          6.039ms ± 159.548us    (5.921ms 
 day11 p1 [MEMORY]                              0B ± 0B                (0B ... 0B)                  0B         0B         0B
 day11 p2               31       1.909s         61.588ms ± 167.229us   (61.266ms ... 61.978ms)      61.688ms   61.978ms   61.978ms
 day11 p2 [MEMORY]                              340.070KiB ± 0B        (340.070KiB ... 340.070KiB)  340.070KiB 340.070KiB 340.070KiB
+
+day12 p1               63       1.655s         26.285ms ± 160.327us   (25.868ms ... 26.923ms)      26.34ms    26.923ms   26.923ms
+day12 p1 [MEMORY]                              824.570KiB ± 0B        (824.570KiB ... 824.570KiB)  824.570KiB 824.570KiB 824.570KiB
 ```
 
 ## Compatibility
