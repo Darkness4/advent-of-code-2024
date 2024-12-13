@@ -67,31 +67,47 @@ const dirs = [_]Vec2{
     Vec2{ .x = 0, .y = 1 }, // down
 };
 
-const SquareMatrix = struct {
+const Matrix = struct {
     data: []u8,
     cap: usize,
+    row_cap: usize,
+    row_size: usize = 0,
+    total_rows: usize = 0,
 
     allocator: std.mem.Allocator,
 
-    fn init(size: usize, allocator: std.mem.Allocator) !SquareMatrix {
-        const data = try allocator.alloc(u8, size * size);
-        return SquareMatrix{ .data = data, .cap = size, .allocator = allocator };
+    fn init(cap: usize, row_cap: usize, allocator: std.mem.Allocator) !Matrix {
+        const data = try allocator.alloc(u8, cap * row_cap);
+        return Matrix{
+            .data = data,
+            .cap = cap,
+            .row_cap = row_cap,
+            .allocator = allocator,
+        };
     }
 
-    fn deinit(self: *SquareMatrix) void {
+    fn deinit(self: *Matrix) void {
         self.allocator.free(self.data);
     }
 
-    fn get(self: *const SquareMatrix, x: usize, y: usize) u8 {
-        return self.data[self.cap * x + y];
+    fn get(self: *const Matrix, x: usize, y: usize) u8 {
+        return self.data[self.row_cap * x + y];
     }
 
-    fn set(self: *SquareMatrix, x: usize, y: usize, value: u8) void {
-        self.data[self.cap * x + y] = value;
+    fn set(self: *Matrix, x: usize, y: usize, value: u8) void {
+        self.data[self.row_cap * x + y] = value;
     }
 
-    fn setRow(self: *SquareMatrix, x: usize, row: []const u8) void {
-        std.mem.copyForwards(u8, self.data[self.cap * x .. self.cap * (x + 1)], row);
+    /// appendRow also sets the size of the matrix if the size of the matrix is 0.
+    /// Appending more row above the row size will do nothing.
+    fn appendRow(self: *Matrix, row: []const u8) void {
+        if (self.row_size == 0) {
+            self.row_size = row.len;
+        } else if (self.row_size != row.len) {
+            std.debug.panic("row size mismatch\n", .{});
+        }
+        std.mem.copyForwards(u8, self.data[self.row_cap * self.total_rows .. self.row_cap * (self.total_rows + 1)], row);
+        self.total_rows += 1;
     }
 };
 
@@ -101,8 +117,7 @@ fn flood_fill(
     allocator: std.mem.Allocator,
     selector: u8,
     start: Pos(usize),
-    size: usize,
-    matrix: SquareMatrix,
+    matrix: Matrix,
     visited: *AutoHashSet(Pos(usize)),
 ) !void {
     var queue = std.ArrayList(Pos(usize)).init(allocator);
@@ -117,7 +132,7 @@ fn flood_fill(
         for (dirs) |dir| {
             const next = current.addWithOverflow(dir);
 
-            if (next.overflow == 1 or next.pos.x >= size or next.pos.y >= size or visited.get(next.pos) != null) {
+            if (next.overflow == 1 or next.pos.x >= matrix.total_rows or next.pos.y >= matrix.total_rows or visited.get(next.pos) != null) {
                 continue;
             }
 
@@ -158,15 +173,13 @@ fn day12(allocator: std.mem.Allocator, data: []const u8) !usize {
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const fba_allocator = fba.allocator();
 
-    var matrix = try SquareMatrix.init(200, fba_allocator);
+    var matrix = try Matrix.init(200, 200, fba_allocator);
     defer matrix.deinit();
 
     // Read everything
-    var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
-        matrix.setRow(idx, line);
+    while (lines.next()) |line| {
+        matrix.appendRow(line);
     }
-    const size = idx;
 
     var visited = AutoHashSet(Pos(usize)).init(allocator);
     defer visited.deinit();
@@ -175,8 +188,8 @@ fn day12(allocator: std.mem.Allocator, data: []const u8) !usize {
     defer region.deinit();
 
     var acc: usize = 0;
-    for (0..size) |i| {
-        for (0..size) |j| {
+    for (0..matrix.total_rows) |i| {
+        for (0..matrix.row_size) |j| {
             region.clearRetainingCapacity();
 
             if (visited.get(.{ .x = i, .y = j }) != null) {
@@ -187,7 +200,6 @@ fn day12(allocator: std.mem.Allocator, data: []const u8) !usize {
                 allocator,
                 matrix.get(i, j),
                 .{ .x = i, .y = j },
-                size,
                 matrix,
                 &region,
             );
@@ -318,15 +330,13 @@ fn day12p2(allocator: std.mem.Allocator, data: []const u8) !usize {
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const fba_allocator = fba.allocator();
 
-    var matrix = try SquareMatrix.init(200, fba_allocator);
+    var matrix = try Matrix.init(200, 200, fba_allocator);
     defer matrix.deinit();
 
     // Read everything
-    var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
-        matrix.setRow(idx, line);
+    while (lines.next()) |line| {
+        matrix.appendRow(line);
     }
-    const size = idx;
 
     var visited = AutoHashSet(Pos(usize)).init(allocator);
     defer visited.deinit();
@@ -335,8 +345,8 @@ fn day12p2(allocator: std.mem.Allocator, data: []const u8) !usize {
     defer region.deinit();
 
     var acc: usize = 0;
-    for (0..size) |i| {
-        for (0..size) |j| {
+    for (0..matrix.total_rows) |i| {
+        for (0..matrix.row_size) |j| {
             region.clearRetainingCapacity();
 
             if (visited.get(.{ .x = i, .y = j }) != null) {
@@ -347,7 +357,6 @@ fn day12p2(allocator: std.mem.Allocator, data: []const u8) !usize {
                 allocator,
                 matrix.get(i, j),
                 .{ .x = i, .y = j },
-                size,
                 matrix,
                 &region,
             );

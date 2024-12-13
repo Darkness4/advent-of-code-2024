@@ -26,36 +26,52 @@ const dirs = [_]Vec2{
     Vec2{ .x = 1, .y = 0 },
 };
 
-const SquareMatrix = struct {
+const Matrix = struct {
     data: []u8,
     cap: usize,
+    row_cap: usize,
+    row_size: usize = 0,
+    total_rows: usize = 0,
 
     allocator: std.mem.Allocator,
 
-    fn init(size: usize, allocator: std.mem.Allocator) !SquareMatrix {
-        const data = try allocator.alloc(u8, size * size);
-        return SquareMatrix{ .data = data, .cap = size, .allocator = allocator };
+    fn init(cap: usize, row_cap: usize, allocator: std.mem.Allocator) !Matrix {
+        const data = try allocator.alloc(u8, cap * row_cap);
+        return Matrix{
+            .data = data,
+            .cap = cap,
+            .row_cap = row_cap,
+            .allocator = allocator,
+        };
     }
 
-    fn deinit(self: *SquareMatrix) void {
+    fn deinit(self: *Matrix) void {
         self.allocator.free(self.data);
     }
 
-    fn get(self: *const SquareMatrix, x: usize, y: usize) u8 {
-        return self.data[self.cap * x + y];
+    fn get(self: *const Matrix, x: usize, y: usize) u8 {
+        return self.data[self.row_cap * x + y];
     }
 
-    fn set(self: *SquareMatrix, x: usize, y: usize, value: u8) void {
-        self.data[self.cap * x + y] = value;
+    fn set(self: *Matrix, x: usize, y: usize, value: u8) void {
+        self.data[self.row_cap * x + y] = value;
     }
 
-    fn setRow(self: *SquareMatrix, x: usize, row: []const u8) void {
-        std.mem.copyForwards(u8, self.data[self.cap * x .. self.cap * (x + 1)], row);
+    /// appendRow also sets the size of the matrix if the size of the matrix is 0.
+    /// Appending more row above the row size will do nothing.
+    fn appendRow(self: *Matrix, row: []const u8) void {
+        if (self.row_size == 0) {
+            self.row_size = row.len;
+        } else if (self.row_size != row.len) {
+            std.debug.panic("row size mismatch\n", .{});
+        }
+        std.mem.copyForwards(u8, self.data[self.row_cap * self.total_rows .. self.row_cap * (self.total_rows + 1)], row);
+        self.total_rows += 1;
     }
 };
 
 // DFS
-fn search(start: Pos, size: usize, matrix: SquareMatrix, visited: *AutoHashSet(Pos)) !usize {
+fn search(start: Pos, matrix: Matrix, visited: *AutoHashSet(Pos)) !usize {
     // Ignore already visited path.
     if (visited.contains(start)) {
         return 0;
@@ -73,7 +89,7 @@ fn search(start: Pos, size: usize, matrix: SquareMatrix, visited: *AutoHashSet(P
         const x: isize = @as(isize, @intCast(start.x)) + dir.x;
         const y: isize = @as(isize, @intCast(start.y)) + dir.y;
 
-        if (x < 0 or y < 0 or x >= size or y >= size) {
+        if (x < 0 or y < 0 or x >= matrix.total_rows or y >= matrix.row_size) {
             continue;
         }
 
@@ -82,7 +98,7 @@ fn search(start: Pos, size: usize, matrix: SquareMatrix, visited: *AutoHashSet(P
             .y = @intCast(y),
         };
         if (matrix.get(next.x, next.y) == startv + 1) {
-            acc += try search(next, size, matrix, visited);
+            acc += try search(next, matrix, visited);
         }
     }
     return acc;
@@ -95,26 +111,24 @@ fn day10(allocator: std.mem.Allocator, data: []const u8) !usize {
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const fba_allocator = fba.allocator();
 
-    var matrix = try SquareMatrix.init(100, fba_allocator);
+    var matrix = try Matrix.init(100, 100, fba_allocator);
     defer matrix.deinit();
 
     // Read everything
-    var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
-        matrix.setRow(idx, line);
+    while (lines.next()) |line| {
+        matrix.appendRow(line);
     }
-    const size = idx;
 
     var visited = AutoHashSet(Pos).init(allocator);
     defer visited.deinit();
 
     var acc: usize = 0;
-    for (0..size) |i| {
-        for (0..size) |j| {
+    for (0..matrix.total_rows) |i| {
+        for (0..matrix.row_size) |j| {
             visited.clearRetainingCapacity();
 
             if (matrix.get(i, j) == '0') {
-                acc += try search(Pos{ .x = i, .y = j }, size, matrix, &visited);
+                acc += try search(.{ .x = i, .y = j }, matrix, &visited);
             }
         }
     }
@@ -123,7 +137,7 @@ fn day10(allocator: std.mem.Allocator, data: []const u8) !usize {
 }
 
 // This time it's pure DFS.
-fn searchDistinct(start: Pos, size: usize, matrix: SquareMatrix) usize {
+fn searchDistinct(start: Pos, matrix: Matrix) usize {
     const startv = matrix.get(start.x, start.y);
     if (startv == '9') {
         return 1;
@@ -134,7 +148,7 @@ fn searchDistinct(start: Pos, size: usize, matrix: SquareMatrix) usize {
         const x: isize = @as(isize, @intCast(start.x)) + dir.x;
         const y: isize = @as(isize, @intCast(start.y)) + dir.y;
 
-        if (x < 0 or y < 0 or x >= size or y >= size) {
+        if (x < 0 or y < 0 or x >= matrix.total_rows or y >= matrix.row_size) {
             continue;
         }
 
@@ -143,7 +157,7 @@ fn searchDistinct(start: Pos, size: usize, matrix: SquareMatrix) usize {
             .y = @intCast(y),
         };
         if (matrix.get(next.x, next.y) == startv + 1) {
-            acc += searchDistinct(next, size, matrix);
+            acc += searchDistinct(next, matrix);
         }
     }
     return acc;
@@ -156,21 +170,19 @@ fn day10p2(data: []const u8) !usize {
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const fba_allocator = fba.allocator();
 
-    var matrix = try SquareMatrix.init(100, fba_allocator);
+    var matrix = try Matrix.init(100, 100, fba_allocator);
     defer matrix.deinit();
 
     // Read everything
-    var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
-        matrix.setRow(idx, line);
+    while (lines.next()) |line| {
+        matrix.appendRow(line);
     }
-    const cap = idx;
 
     var acc: usize = 0;
-    for (0..cap) |i| {
-        for (0..cap) |j| {
+    for (0..matrix.total_rows) |i| {
+        for (0..matrix.row_size) |j| {
             if (matrix.get(i, j) == '0') {
-                acc += searchDistinct(Pos{ .x = i, .y = j }, cap, matrix);
+                acc += searchDistinct(.{ .x = i, .y = j }, matrix);
             }
         }
     }
