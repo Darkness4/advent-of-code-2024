@@ -58,7 +58,7 @@ fn day09(data: []const u8) !usize {
 
 // Making buckets. Everything is given in the intro.
 // Using this method is slower than the previous one but is easier to implement.
-fn day9p2(data: []const u8) !usize {
+fn day09p2(data: []const u8) !usize {
     var buckets = std.BoundedArray(Bucket, 100000){};
 
     // Step 1: Parse input
@@ -108,7 +108,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day09(input);
     const p1_time = timer.lap();
-    const result_p2 = try day9p2(input);
+    const result_p2 = try day09p2(input);
     const p2_time = timer.read();
     std.debug.print("day09 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day09 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -124,7 +124,7 @@ pub fn main() !void {
     }.call, .{});
     try bench.add("day09 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day9p2(input) catch unreachable;
+            _ = day09p2(input) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -139,8 +139,8 @@ test "day09" {
     };
 }
 
-test "day9p2" {
-    const result = try day9p2(input_test);
+test "day09p2" {
+    const result = try day09p2(input_test);
     const expect = 2858;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

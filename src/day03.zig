@@ -67,7 +67,7 @@ fn day03(data: []const u8) !u64 {
 }
 
 /// Another lexer.
-fn day3p2(data: []const u8) !usize {
+fn day03p2(data: []const u8) !usize {
     var acc: u64 = 0;
     var idx: usize = 0;
     var enabled: bool = true;
@@ -122,7 +122,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day03(input);
     const p1_time = timer.lap();
-    const result_p2 = try day3p2(input);
+    const result_p2 = try day03p2(input);
     const p2_time = timer.read();
     std.debug.print("day03 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day03 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -136,7 +136,7 @@ pub fn main() !void {
     }.call, .{});
     try bench.add("day03 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day3p2(input) catch unreachable;
+            _ = day03p2(input) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -151,8 +151,8 @@ test "day03" {
     };
 }
 
-test "day3p2" {
-    const result = try day3p2(input_test);
+test "day03p2" {
+    const result = try day03p2(input_test);
     const expect = 48;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

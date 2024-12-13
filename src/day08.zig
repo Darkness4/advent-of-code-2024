@@ -101,7 +101,7 @@ fn day08(allocator: std.mem.Allocator, data: []const u8) !usize {
     return antinodes.count();
 }
 
-fn day8p2(allocator: std.mem.Allocator, data: []const u8) !usize {
+fn day08p2(allocator: std.mem.Allocator, data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var map = std.AutoHashMap(u8, std.ArrayList(Pos)).init(allocator);
@@ -164,7 +164,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day08(std.heap.page_allocator, input);
     const p1_time = timer.lap();
-    const result_p2 = try day8p2(std.heap.page_allocator, input);
+    const result_p2 = try day08p2(std.heap.page_allocator, input);
     const p2_time = timer.read();
     std.debug.print("day08 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day08 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -180,7 +180,7 @@ pub fn main() !void {
     }.call, .{});
     try bench.add("day08 p2", struct {
         pub fn call(allocator: std.mem.Allocator) void {
-            _ = day8p2(allocator, input) catch unreachable;
+            _ = day08p2(allocator, input) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -195,8 +195,8 @@ test "day08" {
     };
 }
 
-test "day8p2" {
-    const result = try day8p2(std.heap.page_allocator, input_test);
+test "day08p2" {
+    const result = try day08p2(std.heap.page_allocator, input_test);
     const expect = 34;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

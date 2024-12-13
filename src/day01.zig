@@ -58,7 +58,7 @@ fn absSub(a: usize, b: usize) usize {
     return b - a;
 }
 
-fn day1p2(data: []const u8) !usize {
+fn day01p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var list_a: [1000]usize = undefined;
@@ -89,7 +89,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day01(input);
     const p1_time = timer.lap();
-    const result_p2 = try day1p2(input);
+    const result_p2 = try day01p2(input);
     const p2_time = timer.read();
     std.debug.print("day01 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day01 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -103,7 +103,7 @@ pub fn main() !void {
     }.call, .{});
     try bench.add("day01 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day1p2(input) catch unreachable;
+            _ = day01p2(input) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -118,8 +118,8 @@ test "day01" {
     };
 }
 
-test "day1p2" {
-    const result = try day1p2(input_test);
+test "day01p2" {
+    const result = try day01p2(input_test);
     const expect = 31;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
