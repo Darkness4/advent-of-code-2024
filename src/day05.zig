@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day5.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day5_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day05.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day05_test.txt"), "\n");
 
 const max_len = 100;
 
@@ -24,7 +24,7 @@ fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
     return number;
 }
 
-fn day5(data: []const u8) !u64 {
+fn day05(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var rules = [_][max_len]bool{
@@ -145,21 +145,21 @@ fn day5p2(data: []const u8) !u64 {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day5(input);
+    const result_p1 = try day05(input);
     const p1_time = timer.lap();
     const result_p2 = try day5p2(input);
     const p2_time = timer.read();
-    std.debug.print("day5 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day5 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day05 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day05 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
-    try bench.add("day5 p1", struct {
+    try bench.add("day05 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day5(input) catch unreachable;
+            _ = day05(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day5 p2", struct {
+    try bench.add("day05 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day5p2(input) catch unreachable;
         }
@@ -167,8 +167,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day5" {
-    const result = try day5(input_test);
+test "day05" {
+    const result = try day05(input_test);
     const expect = 143;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

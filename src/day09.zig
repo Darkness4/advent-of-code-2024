@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day9.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day9_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day09.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day09_test.txt"), "\n");
 
 const Bucket = struct {
     id: ?usize,
@@ -11,7 +11,7 @@ const Bucket = struct {
 };
 
 // Using big buffers as illustrated in the intro.
-fn day9(data: []const u8) !usize {
+fn day09(data: []const u8) !usize {
     var buffer = [_]usize{0} ** 100000;
 
     // Step 1: Parse input
@@ -106,23 +106,23 @@ fn day9p2(data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day9(input);
+    const result_p1 = try day09(input);
     const p1_time = timer.lap();
     const result_p2 = try day9p2(input);
     const p2_time = timer.read();
-    std.debug.print("day9 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day9 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day09 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day09 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
         .time_budget_ns = 10e9,
     });
     defer bench.deinit();
-    try bench.add("day9 p1", struct {
+    try bench.add("day09 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day9(input) catch unreachable;
+            _ = day09(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day9 p2", struct {
+    try bench.add("day09 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day9p2(input) catch unreachable;
         }
@@ -130,8 +130,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day9" {
-    const result = try day9(input_test);
+test "day09" {
+    const result = try day09(input_test);
     const expect = 1928;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

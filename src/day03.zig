@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day3.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day3_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day03.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day03_test.txt"), "\n");
 
 fn scanNumber(data: []const u8, idx: *usize) !u64 {
     var char = data[idx.*];
@@ -38,7 +38,7 @@ fn next(data: []const u8, idx: *usize) !void {
 /// 5. Scan the second integer.
 /// 6. Read the closing parenthesis.
 /// 7. Statement is valid. Compute the multiplication and done.
-fn day3(data: []const u8) !u64 {
+fn day03(data: []const u8) !u64 {
     var acc: u64 = 0;
     var idx: usize = 0;
     scan: while (idx < data.len) : (idx += 1) {
@@ -120,21 +120,21 @@ fn day3p2(data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day3(input);
+    const result_p1 = try day03(input);
     const p1_time = timer.lap();
     const result_p2 = try day3p2(input);
     const p2_time = timer.read();
-    std.debug.print("day3 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day3 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day03 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day03 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
-    try bench.add("day3 p1", struct {
+    try bench.add("day03 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day3(input) catch unreachable;
+            _ = day03(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day3 p2", struct {
+    try bench.add("day03 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day3p2(input) catch unreachable;
         }
@@ -142,8 +142,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day3" {
-    const result = try day3(input_test);
+test "day03" {
+    const result = try day03(input_test);
     const expect = 161;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

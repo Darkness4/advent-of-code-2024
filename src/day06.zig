@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day6.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day6_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day06.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day06_test.txt"), "\n");
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const gpa_allocator = gpa.allocator();
@@ -125,7 +125,7 @@ fn moveAndAccumulate(map: Map, pos: Pos, dir: Vec2, acc: *usize) !Pos {
     return new_pos;
 }
 
-fn day6(data: []const u8) !u64 {
+fn day06(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var buffer: [201 * 201 * @sizeOf(u8) * @sizeOf([]u8)]u8 = undefined;
@@ -239,7 +239,7 @@ fn moveAndDetectLoop(map: Map, pos: Pos, dir: Vec2, visited: *AutoHashSet(PosVec
 
 // Pseudo-brute force is probably the way to go. Two issues we need to solve:
 //
-// 1. Strategically place the obstacle: use day1 solution (it's fast, so, no issue here), and place an obstacle all over the path.
+// 1. Strategically place the obstacle: use day01 solution (it's fast, so, no issue here), and place an obstacle all over the path.
 // 2. Detect loops: A loop is detected by building an history of pos+dir and check if the new pos+dir appears in the history.
 fn day6p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
@@ -313,24 +313,24 @@ fn day6p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day6(input);
+    const result_p1 = try day06(input);
     const p1_time = timer.lap();
     const result_p2 = try day6p2(gpa_allocator, input);
     const p2_time = timer.read();
-    std.debug.print("day6 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day6 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day06 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day06 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(gpa_allocator, .{
         .track_allocations = true,
         .iterations = 5,
     });
     defer bench.deinit();
-    try bench.add("day6 p1", struct {
+    try bench.add("day06 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day6(input) catch unreachable;
+            _ = day06(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day6 p2", struct {
+    try bench.add("day06 p2", struct {
         pub fn call(allocator: std.mem.Allocator) void {
             _ = day6p2(allocator, input) catch unreachable;
         }
@@ -338,8 +338,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day6" {
-    const result = try day6(input_test);
+test "day06" {
+    const result = try day06(input_test);
     const expect = 41;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

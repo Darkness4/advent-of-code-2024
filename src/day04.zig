@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day4.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day4_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day04.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day04_test.txt"), "\n");
 
 const Pos = struct {
     x: usize,
@@ -28,7 +28,7 @@ const dirs = [_]Vec2{
 
 const mas = "MAS";
 
-fn day4(data: []const u8) !u64 {
+fn day04(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
@@ -124,21 +124,21 @@ fn day4p2(data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day4(input);
+    const result_p1 = try day04(input);
     const p1_time = timer.lap();
     const result_p2 = try day4p2(input);
     const p2_time = timer.read();
-    std.debug.print("day4 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day4 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day04 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day04 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
-    try bench.add("day4 p1", struct {
+    try bench.add("day04 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day4(input) catch unreachable;
+            _ = day04(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day4 p2", struct {
+    try bench.add("day04 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day4p2(input) catch unreachable;
         }
@@ -146,8 +146,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day4" {
-    const result = try day4(input_test);
+test "day04" {
+    const result = try day04(input_test);
     const expect = 18;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

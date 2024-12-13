@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day7.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day7_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day07.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day07_test.txt"), "\n");
 
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
@@ -64,7 +64,7 @@ fn resolve(expected: usize, equation: []usize, idx: usize, with_concat: bool) !v
     return resolve(new_expected, equation, idx - 1, with_concat);
 }
 
-fn day7(data: []const u8) !usize {
+fn day07(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var buffer: [31 * @sizeOf(usize)]u8 = undefined;
@@ -182,21 +182,21 @@ fn day7p2(data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day7(input);
+    const result_p1 = try day07(input);
     const p1_time = timer.lap();
     const result_p2 = try day7p2(input);
     const p2_time = timer.read();
-    std.debug.print("day7 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day7 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day07 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day07 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
-    try bench.add("day7 p1", struct {
+    try bench.add("day07 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day7(input) catch unreachable;
+            _ = day07(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day7 p2", struct {
+    try bench.add("day07 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day7p2(input) catch unreachable;
         }
@@ -204,8 +204,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day7" {
-    const result = try day7(input_test);
+test "day07" {
+    const result = try day07(input_test);
     const expect = 3749;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

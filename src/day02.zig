@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day2.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day2_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day02.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day02_test.txt"), "\n");
 
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
@@ -22,7 +22,7 @@ fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
     return number;
 }
 
-fn day2(data: []const u8) !u64 {
+fn day02(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var acc: u64 = 0;
@@ -107,21 +107,21 @@ fn day2p2(data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day2(input);
+    const result_p1 = try day02(input);
     const p1_time = timer.lap();
     const result_p2 = try day2p2(input);
     const p2_time = timer.read();
-    std.debug.print("day2 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day2 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day02 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day02 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
-    try bench.add("day2 p1", struct {
+    try bench.add("day02 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day2(input) catch unreachable;
+            _ = day02(input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day2 p2", struct {
+    try bench.add("day02 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
             _ = day2p2(input) catch unreachable;
         }
@@ -129,8 +129,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day2" {
-    const result = try day2(input_test);
+test "day02" {
+    const result = try day02(input_test);
     const expect = 2;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

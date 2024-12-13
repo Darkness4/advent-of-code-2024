@@ -2,8 +2,8 @@ const std = @import("std");
 
 const zbench = @import("zbench");
 
-const input = std.mem.trimRight(u8, @embedFile("day8.txt"), "\n");
-const input_test = std.mem.trimRight(u8, @embedFile("day8_test.txt"), "\n");
+const input = std.mem.trimRight(u8, @embedFile("day08.txt"), "\n");
+const input_test = std.mem.trimRight(u8, @embedFile("day08_test.txt"), "\n");
 
 const Pos = struct {
     x: usize,
@@ -48,7 +48,7 @@ fn AutoHashSet(comptime T: type) type {
 
 // It's math. Save HashMap by type, queue the nodes, loop over it, compute coords, exclude out of bounds, and count.
 // Can easily be done using functional programming.
-fn day8(allocator: std.mem.Allocator, data: []const u8) !usize {
+fn day08(allocator: std.mem.Allocator, data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var map = std.AutoHashMap(u8, std.ArrayList(Pos)).init(allocator);
@@ -162,23 +162,23 @@ fn day8p2(allocator: std.mem.Allocator, data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day8(std.heap.page_allocator, input);
+    const result_p1 = try day08(std.heap.page_allocator, input);
     const p1_time = timer.lap();
     const result_p2 = try day8p2(std.heap.page_allocator, input);
     const p2_time = timer.read();
-    std.debug.print("day8 p1: {} in {}ns\n", .{ result_p1, p1_time });
-    std.debug.print("day8 p2: {} in {}ns\n", .{ result_p2, p2_time });
+    std.debug.print("day08 p1: {} in {}ns\n", .{ result_p1, p1_time });
+    std.debug.print("day08 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
         .track_allocations = true,
     });
     defer bench.deinit();
-    try bench.add("day8 p1", struct {
+    try bench.add("day08 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
-            _ = day8(allocator, input) catch unreachable;
+            _ = day08(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.add("day8 p2", struct {
+    try bench.add("day08 p2", struct {
         pub fn call(allocator: std.mem.Allocator) void {
             _ = day8p2(allocator, input) catch unreachable;
         }
@@ -186,8 +186,8 @@ pub fn main() !void {
     try bench.run(std.io.getStdOut().writer());
 }
 
-test "day8" {
-    const result = try day8(std.heap.page_allocator, input_test);
+test "day08" {
+    const result = try day08(std.heap.page_allocator, input_test);
     const expect = 14;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
