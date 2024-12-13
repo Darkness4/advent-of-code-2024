@@ -8,16 +8,16 @@ const input_test = std.mem.trimRight(u8, @embedFile("day02_test.txt"), "\n");
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
 /// A very naive implementation, yet the fastest for Advent of Code.
-fn scanNumber(comptime T: type, data: []const u8, idx: *T) ?T {
+fn scanNumber(comptime T: type, data: []const u8, idx: *usize) ?T {
     var number: ?T = null;
     if (idx.* >= data.len) return number;
-    var char = data[@intCast(idx.*)];
+    var char = data[idx.*];
     while (char >= '0' and char <= '9') {
         const v = char - '0';
         number = if (number == null) v else number.? * 10 + (char - '0');
         idx.* += 1;
         if (idx.* >= data.len) break;
-        char = data[@intCast(idx.*)];
+        char = data[idx.*];
     }
     return number;
 }
@@ -28,7 +28,7 @@ fn day02(data: []const u8) !u64 {
     var acc: u64 = 0;
 
     line: while (lines.next()) |line| {
-        var scan_idx: i64 = 0;
+        var scan_idx: usize = 0;
         var last: i64 = scanNumber(i64, line, &scan_idx) orelse unreachable;
         scan_idx += 1;
         var last_diff: i64 = 0;
