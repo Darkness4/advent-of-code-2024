@@ -58,9 +58,9 @@ const Robot = struct {
     vec: Vec2(isize),
     max: Pos(isize),
 
-    pub fn move(self: *Robot) void {
-        self.pos.x = @mod(self.pos.x + self.vec.x, self.max.x);
-        self.pos.y = @mod(self.pos.y + self.vec.y, self.max.y);
+    pub fn move(self: *Robot, times: isize) void {
+        self.pos.x = @mod(self.pos.x + (self.vec.x * times), self.max.x);
+        self.pos.y = @mod(self.pos.y + (self.vec.y * times), self.max.y);
     }
 
     pub fn inIn(self: *Robot, low_pos: Pos(isize), high_pos: Pos(isize)) bool {
@@ -76,7 +76,7 @@ test "move" {
         .max = .{ .x = 11, .y = 7 },
     };
     const expected: Pos(isize) = .{ .x = 4, .y = 1 };
-    robot.move();
+    robot.move(1);
     std.testing.expect(robot.pos.eql(expected)) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ robot.pos, expected });
         return err;
@@ -147,10 +147,8 @@ fn day14(data: []const u8, comptime max: Pos(isize)) !usize {
         robots.appendAssumeCapacity(robot);
     }
 
-    for (0..100) |_| {
-        for (robots.items) |*robot| {
-            robot.move();
-        }
+    for (robots.items) |*robot| {
+        robot.move(100);
     }
 
     // std.debug.print("robots: {}\n", .{robots.items.len});
@@ -173,20 +171,116 @@ fn day14(data: []const u8, comptime max: Pos(isize)) !usize {
     return acc;
 }
 
-fn day14p2(_: []const u8) !isize {
-    return 0;
+const Matrix = struct {
+    data: []u8,
+    size_x: usize,
+    size_y: usize,
+
+    allocator: std.mem.Allocator,
+
+    fn init(size_x: usize, size_y: usize, allocator: std.mem.Allocator) !Matrix {
+        const data = try allocator.alloc(u8, size_x * size_y);
+        @memset(data, '.');
+        return Matrix{
+            .data = data,
+            .size_x = size_x,
+            .size_y = size_y,
+            .allocator = allocator,
+        };
+    }
+
+    fn deinit(self: *Matrix) void {
+        self.allocator.free(self.data);
+    }
+
+    fn get(self: *const Matrix, x: usize, y: usize) u8 {
+        return self.data[self.size_x * x + y];
+    }
+
+    fn set(self: *Matrix, x: usize, y: usize, value: u8) void {
+        self.data[self.size_x * x + y] = value;
+    }
+
+    fn clear(self: *Matrix) void {
+        @memset(self.data, '.');
+    }
+
+    fn print(self: *const Matrix) void {
+        for (0..self.size_x) |x| {
+            std.debug.print("{s}\n", .{self.data[self.size_x * x .. self.size_x * (x + 1)]});
+        }
+    }
+};
+
+var dirs = [_]Vec2(isize){
+    .{ .x = 0, .y = 1 },
+    .{ .x = 1, .y = 0 },
+    .{ .x = 0, .y = -1 },
+    .{ .x = -1, .y = 0 },
+};
+
+// A chrismas tree would have an abnormal alignment of robots, especially vertically.
+fn day14p2(allocator: std.mem.Allocator, data: []const u8, comptime max: Pos(isize)) !usize {
+    var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [500 * @sizeOf(Robot)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
+    var matrix = try Matrix.init(max.x, max.y, allocator);
+    defer matrix.deinit();
+
+    var robots = try std.ArrayList(Robot).initCapacity(fba_allocator, 500);
+    defer robots.deinit();
+
+    while (lines.next()) |line| {
+        const robot = scanLine(line, max);
+        robots.appendAssumeCapacity(robot);
+    }
+
+    var count: usize = 0;
+    while (true) : (count += 1) {
+        // std.debug.print("count: {}\n", .{count});
+        matrix.clear();
+
+        for (robots.items) |*robot| {
+            robot.move(1);
+
+            matrix.set(@intCast(robot.pos.x), @intCast(robot.pos.y), 'X');
+        }
+
+        var neigh_count: usize = 0;
+        for (robots.items) |robot| {
+            for (dirs) |dir| {
+                const x = robot.pos.x + dir.x;
+                const y = robot.pos.y + dir.y;
+                if (x < 0 or x >= max.x or y < 0 or y >= max.y) continue;
+                if (matrix.get(@intCast(x), @intCast(y)) == 'X') {
+                    neigh_count += 1;
+                }
+            }
+        }
+        if (neigh_count >= 1000) {
+            // matrix.print();
+            break;
+        }
+    }
+
+    return count + 1;
 }
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day14(input, .{ .x = max_x, .y = max_y });
     const p1_time = timer.lap();
-    const result_p2 = try day14p2(input);
+    const result_p2 = try day14p2(std.heap.page_allocator, input, .{ .x = max_x, .y = max_y });
     const p2_time = timer.read();
     std.debug.print("day14 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day14 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
+        .track_allocations = true,
+    });
     defer bench.deinit();
     try bench.add("day14 p1", struct {
         pub fn call(_: std.mem.Allocator) void {
@@ -194,8 +288,8 @@ pub fn main() !void {
         }
     }.call, .{});
     try bench.add("day14 p2", struct {
-        pub fn call(_: std.mem.Allocator) void {
-            _ = day14p2(input) catch unreachable;
+        pub fn call(allocator: std.mem.Allocator) void {
+            _ = day14p2(allocator, input, .{ .x = max_x, .y = max_y }) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -204,15 +298,6 @@ pub fn main() !void {
 test "day14" {
     const result = try day14(input_test, .{ .x = 11, .y = 7 });
     const expect = 12;
-    std.testing.expect(result == expect) catch |err| {
-        std.debug.print("got: {}, expect: {}\n", .{ result, expect });
-        return err;
-    };
-}
-
-test "day14p2" {
-    const result = try day14p2(input_test);
-    const expect = 0;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
         return err;
