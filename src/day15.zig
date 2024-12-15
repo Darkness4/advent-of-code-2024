@@ -385,7 +385,7 @@ fn day15(data: []const u8) !usize {
 }
 
 // A chrismas tree would have an abnormal alignment of robots, especially vertically.
-fn day15p2(data: []const u8) !usize {
+fn day15p2(data: []const u8, comptime live: bool) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
     var buffer: [100 * 100 * @sizeOf(u8)]u8 = undefined;
@@ -413,6 +413,11 @@ fn day15p2(data: []const u8) !usize {
             const next = current_pos.addWithOverflow(d);
             if (next.overflow == 1) unreachable;
             // It's technically impossible to overflow. The area is bounded by walls.
+
+            if (live) {
+                std.debug.print("\x1B[H", .{}); // Move cursor to top left.
+                matrix.print();
+            }
 
             if (matrix.moveBox(next.pos, d)) {
                 matrix.set(current_pos, '.');
@@ -442,7 +447,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day15(input);
     const p1_time = timer.lap();
-    const result_p2 = try day15p2(input);
+    const result_p2 = try day15p2(input, true);
     const p2_time = timer.read();
     std.debug.print("day15 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day15 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -458,7 +463,7 @@ pub fn main() !void {
     }.call, .{});
     try bench.add("day15 p2", struct {
         pub fn call(_: std.mem.Allocator) void {
-            _ = day15p2(input) catch unreachable;
+            _ = day15p2(input, false) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -481,7 +486,7 @@ test "day15" {
 }
 
 test "day15p2" {
-    const result2 = try day15p2(input_test2);
+    const result2 = try day15p2(input_test2, false);
     const expect2 = 9021;
     std.testing.expect(result2 == expect2) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result2, expect2 });
