@@ -227,16 +227,134 @@ fn day16(allocator: std.mem.Allocator, data: []const u8) !usize {
     return score;
 }
 
-// A chrismas tree would have an abnormal alignment of robots, especially vertically.
-fn day16p2(_: []const u8, comptime _: bool) !usize {
-    return 0;
+const PosDirScoreWithTrace = struct {
+    pos: Pos(usize),
+    dir_idx: usize,
+    score: usize,
+    trace: std.ArrayList(Pos(usize)),
+};
+
+fn astarWithTrace(
+    matrix: *const Matrix,
+    start: Pos(usize),
+    end: Pos(usize),
+    allocator: std.mem.Allocator,
+) !usize {
+    var open = std.PriorityQueue(PosDirScoreWithTrace, void, struct {
+        fn func(_: void, a: PosDirScoreWithTrace, b: PosDirScoreWithTrace) std.math.Order {
+            return std.math.order(a.score, b.score);
+        }
+    }.func).init(allocator, {});
+    defer open.deinit();
+
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const arena_allocator = arena.allocator();
+
+    var seen = AutoHashSet(Pos(usize)).init(allocator);
+    defer seen.deinit();
+
+    var start_trace = try std.ArrayList(Pos(usize)).initCapacity(arena_allocator, 1);
+    start_trace.appendAssumeCapacity(start);
+
+    try open.add(.{ .pos = start, .dir_idx = 1, .score = 0, .trace = start_trace });
+
+    var best: usize = 1e9;
+
+    var distances = std.AutoHashMap(PosDir, usize).init(allocator);
+    defer distances.deinit();
+    try distances.put(.{ .dir_idx = 1, .pos = start }, 1e9);
+
+    var count: usize = 0;
+
+    while (open.count() > 0) {
+        count += 1;
+        const current = open.remove();
+
+        // Skip if we have already visited this node with a better score.
+        const existing_distance = distances.get(.{ .pos = current.pos, .dir_idx = current.dir_idx });
+        if (existing_distance != null and current.score > existing_distance.?) {
+            continue;
+        } else {
+            try distances.put(.{ .pos = current.pos, .dir_idx = current.dir_idx }, current.score);
+        }
+
+        // Found a path to the end.
+        if (current.pos.eql(end) and current.score <= best) {
+            // Add the path to the seen set.
+            for (current.trace.items) |pos| {
+                try seen.put(pos, {});
+            }
+
+            best = current.score;
+        }
+
+        for (rot_scores) |rot_score| {
+            const next_dir_idx = (current.dir_idx + rot_score.rot) % 4;
+            const next_pos = current.pos.addWithOverflow(dirs[next_dir_idx]);
+            if (next_pos.overflow == 1) continue;
+            if (next_pos.pos.x >= matrix.total_rows or next_pos.pos.y >= matrix.row_size) continue;
+            if (matrix.get(next_pos.pos) == '#') continue;
+
+            var next_trace = try current.trace.clone();
+            try next_trace.append(next_pos.pos);
+
+            const next_score = current.score + rot_score.score;
+            try open.add(.{
+                .pos = next_pos.pos,
+                .dir_idx = next_dir_idx,
+                .score = next_score,
+                .trace = next_trace,
+            });
+        }
+    }
+
+    return seen.count();
+}
+
+fn day16p2(allocator: std.mem.Allocator, data: []const u8) !usize {
+    var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [141 * 141 * @sizeOf(u8)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
+    var matrix = try Matrix.init(141, 141, fba_allocator);
+    defer matrix.deinit();
+
+    var start: ?Pos(usize) = null;
+    var end: ?Pos(usize) = null;
+    while (lines.next()) |line| {
+        if (line.len == 0) {
+            break;
+        }
+        matrix.appendRow(line);
+        if (start == null or end == null) {
+            for (0.., line) |y, c| {
+                if (start == null) {
+                    if (c == 'S') {
+                        start = .{ .x = matrix.total_rows - 1, .y = y };
+                    }
+                }
+                if (end == null) {
+                    if (c == 'E') {
+                        end = .{ .x = matrix.total_rows - 1, .y = y };
+                    }
+                }
+            }
+        }
+    }
+
+    const tiles = try astarWithTrace(&matrix, start.?, end.?, allocator);
+
+    return tiles;
 }
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day16(std.heap.page_allocator, input);
     const p1_time = timer.lap();
-    const result_p2 = try day16p2(input, true);
+    const result_p2 = try day16p2(std.heap.page_allocator, input);
     const p2_time = timer.read();
     std.debug.print("day16 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day16 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -251,8 +369,8 @@ pub fn main() !void {
         }
     }.call, .{});
     try bench.add("day16 p2", struct {
-        pub fn call(_: std.mem.Allocator) void {
-            _ = day16p2(input, false) catch unreachable;
+        pub fn call(allocator: std.mem.Allocator) void {
+            _ = day16p2(allocator, input) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -271,6 +389,26 @@ test "day16" {
     {
         const result = try day16(std.heap.page_allocator, input_test2);
         const expect = 11048;
+        std.testing.expect(result == expect) catch |err| {
+            std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+            return err;
+        };
+    }
+}
+
+test "day16p2" {
+    {
+        const result = try day16p2(std.heap.page_allocator, input_test);
+        const expect = 45;
+        std.testing.expect(result == expect) catch |err| {
+            std.debug.print("got: {}, expect: {}\n", .{ result, expect });
+            return err;
+        };
+    }
+
+    {
+        const result = try day16p2(std.heap.page_allocator, input_test2);
+        const expect = 64;
         std.testing.expect(result == expect) catch |err| {
             std.debug.print("got: {}, expect: {}\n", .{ result, expect });
             return err;
