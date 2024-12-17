@@ -155,10 +155,7 @@ fn astar(
     defer distances.deinit();
     try distances.put(.{ .dir_idx = 1, .pos = start }, 1e9);
 
-    var count: usize = 0;
-
     while (open.count() > 0) {
-        count += 1;
         const current = open.remove();
 
         // Skip if we have already visited this node with a better score.
@@ -265,10 +262,7 @@ fn astarWithTrace(
     defer distances.deinit();
     try distances.put(.{ .dir_idx = 1, .pos = start }, 1e9);
 
-    var count: usize = 0;
-
     while (open.count() > 0) {
-        count += 1;
         const current = open.remove();
 
         // Skip if we have already visited this node with a better score.
