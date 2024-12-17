@@ -84,6 +84,9 @@ day16 p1               31       1.72s          55.489ms ± 824.908us   (54.535ms
 day16 p1 [MEMORY]                              1.588MiB ± 0B          (1.588MiB ... 1.588MiB)      1.588MiB   1.588MiB   1.588MiB
 day16 p2               3        1.028s         342.921ms ± 2.97ms     (339.649ms ... 345.45ms)     345.45ms   345.45ms   345.45ms
 day16 p2 [MEMORY]                              1.640MiB ± 0B          (1.640MiB ... 1.640MiB)      1.640MiB   1.640MiB   1.640MiB
+
+day17 p1               65535    60.376ms       921ns ± 68ns           (871ns ... 3.878us)          932ns      972ns      982ns
+day17 p2               8191     1.526s         186.355us ± 3.343us    (174.501us ... 228.243us)    187.876us  193.476us  194.559us
 ```
 
 ## Compatibility
