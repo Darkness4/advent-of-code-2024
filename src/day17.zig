@@ -4,6 +4,7 @@ const zbench = @import("zbench");
 
 const input = std.mem.trimRight(u8, @embedFile("day17.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day17_test.txt"), "\n");
+const input_test2 = std.mem.trimRight(u8, @embedFile("day17_test2.txt"), "\n");
 
 const register_prefix_len = "Register A: ".len;
 const program_prefix_len = "Program: ".len;
@@ -305,7 +306,7 @@ test "day17" {
 }
 
 test "day17p2" {
-    const result = try day17p2(input_test);
+    const result = try day17p2(input_test2);
     const expect = 117440;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });

@@ -11,7 +11,7 @@ zig build <dayX>
 
 ```shell
 zig() {
-  docker run --rm -v $(pwd):/work -w /work ghcr.io/darkness4/aoc-2024:base "$@"
+  docker run --ulimit=host --rm -v $(pwd):/work -w /work ghcr.io/darkness4/aoc-2024:base "$@"
 }
 zig build <dayX>
 ```
