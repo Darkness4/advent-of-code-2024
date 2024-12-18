@@ -181,6 +181,17 @@ const Matrix = struct {
             std.debug.print("{s}\n", .{self.data[self.row_size * x .. (self.row_size * x) + self.row_size]});
         }
     }
+
+    fn cloneWithAllocator(self: *const Matrix, allocator: std.mem.Allocator) !Matrix {
+        const data = try allocator.alloc(u8, self.total_rows * self.row_size);
+        @memcpy(data, self.data);
+        return .{
+            .data = data,
+            .total_rows = self.total_rows,
+            .row_size = self.row_size,
+            .allocator = allocator,
+        };
+    }
 };
 
 const dirs = [_]Vec2(isize){
@@ -219,20 +230,85 @@ fn day18(
     return astar(&matrix, .{ .x = 0, .y = 0 }, allocator);
 }
 
-fn day18p2(_: []const u8) !usize {
-    return 0;
+fn day18p2(
+    allocator: std.mem.Allocator,
+    data: []const u8,
+    comptime size: usize,
+    comptime read_until: usize,
+) !Pos(usize) {
+    var lines = std.mem.splitScalar(u8, data, '\n');
+
+    var buffer: [100 * 100 * @sizeOf(usize)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
+    var next_event_buf: [2500]Pos(usize) = undefined;
+    var next_event_size: usize = 0;
+
+    var matrix = try Matrix.init(size, size, fba_allocator);
+    defer matrix.deinit();
+
+    // Read two columns of numbers
+    var idx: usize = 0;
+    while (lines.next()) |line| : (idx += 1) {
+        if (idx >= read_until) break;
+        var ch_idx: usize = 0;
+        const a: usize = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        ch_idx += 1;
+        const b: usize = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        matrix.set(.{ .x = a, .y = b }, '#');
+    }
+
+    while (lines.next()) |line| {
+        var ch_idx: usize = 0;
+        const a: usize = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        ch_idx += 1;
+        const b: usize = scanNumber(usize, line, &ch_idx) orelse unreachable;
+        next_event_buf[next_event_size] = .{ .x = a, .y = b };
+        next_event_size += 1;
+    }
+    const next_events = next_event_buf[0..next_event_size];
+
+    var new_buffer: [100 * 100 * @sizeOf(usize)]u8 = undefined;
+    var new_fba = std.heap.FixedBufferAllocator.init(&new_buffer);
+    const new_fba_allocator = new_fba.allocator();
+
+    // Binary search the answer.
+    var left: usize = 0;
+    var right = next_event_size;
+    while (left < right - 1) {
+        const mid = (left + right) / 2;
+
+        // Build the new matrix.
+        var new_matrix = try matrix.cloneWithAllocator(new_fba_allocator);
+        defer new_matrix.deinit();
+
+        for (next_events[0..mid]) |pos| {
+            new_matrix.set(pos, '#');
+        }
+
+        if (try astar(&new_matrix, .{ .x = 0, .y = 0 }, allocator) != std.math.maxInt(usize)) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    return next_events[left];
 }
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day18(std.heap.page_allocator, input, 71, 1024);
     const p1_time = timer.lap();
-    const result_p2 = try day18p2(input);
+    const result_p2 = try day18p2(std.heap.page_allocator, input, 71, 1024);
     const p2_time = timer.read();
     std.debug.print("day18 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day18 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
+        .track_allocations = true,
+    });
     defer bench.deinit();
     try bench.add("day18 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
@@ -240,8 +316,8 @@ pub fn main() !void {
         }
     }.call, .{});
     try bench.add("day18 p2", struct {
-        pub fn call(_: std.mem.Allocator) void {
-            _ = day18p2(input) catch unreachable;
+        pub fn call(allocator: std.mem.Allocator) void {
+            _ = day18p2(allocator, input, 71, 1024) catch unreachable;
         }
     }.call, .{});
     try bench.run(std.io.getStdOut().writer());
@@ -257,9 +333,9 @@ test "day18" {
 }
 
 test "day18p2" {
-    const result = try day18p2(input_test);
-    const expect = 0;
-    std.testing.expect(result == expect) catch |err| {
+    const result = try day18p2(std.heap.page_allocator, input_test, 7, 12);
+    const expect = Pos(usize){ .x = 6, .y = 1 };
+    std.testing.expect(result.eql(expect)) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
         return err;
     };
