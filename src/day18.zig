@@ -269,25 +269,30 @@ fn day18p2(
     }
     const next_events = next_event_buf[0..next_event_size];
 
-    var new_buffer: [100 * 100 * @sizeOf(usize)]u8 = undefined;
-    var new_fba = std.heap.FixedBufferAllocator.init(&new_buffer);
-    const new_fba_allocator = new_fba.allocator();
-
     // Binary search the answer.
     var left: usize = 0;
     var right = next_event_size;
+    var mid = (left + right) / 2;
+    var old_mid = mid;
     while (left < right - 1) {
-        const mid = (left + right) / 2;
+        old_mid = mid;
+        mid = (left + right) / 2;
 
-        // Build the new matrix.
-        var new_matrix = try matrix.cloneWithAllocator(new_fba_allocator);
-        defer new_matrix.deinit();
-
-        for (next_events[0..mid]) |pos| {
-            new_matrix.set(pos, '#');
+        if (mid == old_mid) { // init
+            for (next_events[0..mid]) |pos| {
+                matrix.set(pos, '#');
+            }
+        } else if (mid > old_mid) { // mid has moved right, meaning we need to play new events.
+            for (next_events[old_mid..mid]) |pos| {
+                matrix.set(pos, '#');
+            }
+        } else { // mid has moved left, meaning we need to remove old events.
+            for (next_events[mid..old_mid]) |pos| {
+                matrix.set(pos, '.');
+            }
         }
 
-        if (try astar(&new_matrix, .{ .x = 0, .y = 0 }, allocator) != std.math.maxInt(usize)) {
+        if (try astar(&matrix, .{ .x = 0, .y = 0 }, allocator) != std.math.maxInt(usize)) {
             left = mid;
         } else {
             right = mid - 1;
