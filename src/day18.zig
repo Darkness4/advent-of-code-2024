@@ -132,7 +132,7 @@ fn astar(
 
             const new_cost = current_cost + 1;
 
-            if (actual_costs.get(next_pos.pos) == null or new_cost < actual_costs.get(next_pos.pos).?) {
+            if (!actual_costs.contains(next_pos.pos) or new_cost < actual_costs.get(next_pos.pos).?) {
                 try actual_costs.put(next_pos.pos, new_cost);
 
                 const heuristic = score(current.pos, end);
