@@ -23,7 +23,7 @@ fn scanNumber(data: []const u8, idx: *usize) ?isize {
     }
     while (char >= '0' and char <= '9') {
         const v = char - '0';
-        number = if (number == null) v else number.? * 10 + (char - '0');
+        number = if (number) |n| n * 10 + (char - '0') else v;
         idx.* += 1;
         if (idx.* >= data.len) break;
         char = data[idx.*];
