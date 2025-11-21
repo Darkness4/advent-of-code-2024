@@ -447,7 +447,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
     const result_p1 = try day15(input);
     const p1_time = timer.lap();
-    const result_p2 = try day15p2(input, true);
+    const result_p2 = try day15p2(input, false);
     const p2_time = timer.read();
     std.debug.print("day15 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day15 p2: {} in {}ns\n", .{ result_p2, p2_time });
@@ -466,7 +466,11 @@ pub fn main() !void {
             _ = day15p2(input, false) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day15" {

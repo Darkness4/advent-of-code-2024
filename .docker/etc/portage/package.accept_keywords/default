@@ -13,4 +13,4 @@ sys-libs/libcxx ~amd64
 sys-libs/libcxxabi ~amd64
 sys-libs/libomp ~amd64
 app-eselect/eselect-zig ~amd64
-dev-lang/zig **
+dev-lang/zig ~amd64

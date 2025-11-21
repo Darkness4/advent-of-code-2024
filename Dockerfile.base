@@ -10,7 +10,7 @@ RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" emerge \
   --with-bdeps=n \
   --getbinpkg \
   --onlydeps \
-  '=dev-lang/zig-9999'
+  'dev-lang/zig'
 
 FROM base-builder AS zig-builder
 
@@ -19,7 +19,7 @@ RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" \
   emerge \
   --with-bdeps=n \
   --getbinpkg \
-  '=dev-lang/zig-9999'
+  'dev-lang/zig'
 
 FROM scratch
 

@@ -290,8 +290,8 @@ fn astarWithTrace(
             if (next_pos.pos.x >= matrix.total_rows or next_pos.pos.y >= matrix.row_size) continue;
             if (matrix.get(next_pos.pos) == '#') continue;
 
-            var next_trace = try current.trace.clone();
-            try next_trace.append(next_pos.pos);
+            var next_trace = try current.trace.clone(arena_allocator);
+            try next_trace.append(arena_allocator, next_pos.pos);
 
             const next_score = current.score + rot_score.score;
             try open.add(.{
@@ -353,9 +353,7 @@ pub fn main() !void {
     std.debug.print("day16 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day16 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
-        .track_allocations = true,
-    });
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
     try bench.add("day16 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
@@ -367,7 +365,11 @@ pub fn main() !void {
             _ = day16p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day16" {

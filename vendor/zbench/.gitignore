@@ -1,7 +1,0 @@
-.zig-cache/
-zig-out/
-
-# libs
-libs
-
-.DS_Store

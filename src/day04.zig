@@ -16,14 +16,14 @@ const Vec2 = struct {
 };
 
 const dirs = [_]Vec2{
-    Vec2{ .x = -1, .y = -1 },
-    Vec2{ .x = -1, .y = 0 },
-    Vec2{ .x = -1, .y = 1 },
-    Vec2{ .x = 0, .y = -1 },
-    Vec2{ .x = 0, .y = 1 },
-    Vec2{ .x = 1, .y = 1 },
-    Vec2{ .x = 1, .y = 0 },
-    Vec2{ .x = 1, .y = -1 },
+    .{ .x = -1, .y = -1 },
+    .{ .x = -1, .y = 0 },
+    .{ .x = -1, .y = 1 },
+    .{ .x = 0, .y = -1 },
+    .{ .x = 0, .y = 1 },
+    .{ .x = 1, .y = 1 },
+    .{ .x = 1, .y = 0 },
+    .{ .x = 1, .y = -1 },
 };
 
 const mas = "MAS";
@@ -31,15 +31,11 @@ const mas = "MAS";
 fn day04(data: []const u8) !u64 {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
+    var rows_buffer: [140][]const u8 = undefined;
+    var rows = std.ArrayList([]const u8).initBuffer(&rows_buffer);
 
-    var rows = try std.ArrayList([]const u8).initCapacity(allocator, 140);
-    defer rows.deinit();
-
-    var x_poss = try std.ArrayList(Pos).initCapacity(allocator, 140 * 140);
-    defer x_poss.deinit();
+    var x_poss_buffer: [140 * 140]Pos = undefined;
+    var x_poss = std.ArrayList(Pos).initBuffer(&x_poss_buffer);
 
     // Read everything and store the coordinates of X
     var idx_row: usize = 0;
@@ -78,15 +74,11 @@ fn day04(data: []const u8) !u64 {
 fn day04p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [141 * 141 * @sizeOf(Pos) + 141 * @sizeOf([]const u8)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
+    var rows_buffer: [140][]const u8 = undefined;
+    var rows = std.ArrayList([]const u8).initBuffer(&rows_buffer);
 
-    var rows = try std.ArrayList([]const u8).initCapacity(allocator, 140);
-    defer rows.deinit();
-
-    var a_poss = try std.ArrayList(Pos).initCapacity(allocator, 140 * 140);
-    defer a_poss.deinit();
+    var a_poss_buffer: [140 * 140]Pos = undefined;
+    var a_poss = std.ArrayList(Pos).initBuffer(&a_poss_buffer);
 
     // Read everything and store the coordinates of A
     var idx_row: usize = 0;
@@ -143,7 +135,11 @@ pub fn main() !void {
             _ = day04p2(input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day04" {

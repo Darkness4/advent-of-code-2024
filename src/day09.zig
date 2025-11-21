@@ -59,7 +59,8 @@ fn day09(data: []const u8) !usize {
 // Making buckets. Everything is given in the intro.
 // Using this method is slower than the previous one but is easier to implement.
 fn day09p2(data: []const u8) !usize {
-    var buckets = std.BoundedArray(Bucket, 100000){};
+    var buffer: [100000]Bucket = undefined;
+    var buckets = std.ArrayList(Bucket).initBuffer(&buffer);
 
     // Step 1: Parse input
     for (0.., data) |idx, c| {
@@ -71,26 +72,26 @@ fn day09p2(data: []const u8) !usize {
     }
 
     // Step 2: Execute litterally the algorithm.
-    var filled_bucket_idx: usize = buckets.len;
+    var filled_bucket_idx: usize = buckets.items.len;
     while (filled_bucket_idx > 0) {
         filled_bucket_idx -= 1;
         var empty_bucket_idx: usize = 1;
         while (empty_bucket_idx < filled_bucket_idx) : (empty_bucket_idx += 1) {
-            const empty_bucket = &buckets.buffer[empty_bucket_idx];
-            const filled_bucket = &buckets.buffer[filled_bucket_idx];
+            const empty_bucket = &buckets.items[empty_bucket_idx];
+            const filled_bucket = &buckets.items[filled_bucket_idx];
 
             if (empty_bucket.id == null and filled_bucket.id != null and filled_bucket.capacity <= empty_bucket.capacity) {
                 const id = filled_bucket.id;
                 filled_bucket.*.id = null;
                 empty_bucket.*.capacity -= filled_bucket.capacity; // Reduce capacity of empty bucket.
-                try buckets.insert(empty_bucket_idx, .{ .id = id, .capacity = filled_bucket.capacity });
+                buckets.insertAssumeCapacity(empty_bucket_idx, .{ .id = id, .capacity = filled_bucket.capacity });
             }
         }
     }
 
     var acc: usize = 0;
     var idx: usize = 0;
-    for (buckets.slice()) |item| {
+    for (buckets.items) |item| {
         if (item.id == null) {
             idx += item.capacity;
             continue;
@@ -127,7 +128,11 @@ pub fn main() !void {
             _ = day09p2(input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day09" {

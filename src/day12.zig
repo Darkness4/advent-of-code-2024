@@ -120,11 +120,11 @@ fn flood_fill(
     matrix: Matrix,
     visited: *AutoHashSet(Pos(usize)),
 ) !void {
-    var queue = std.ArrayList(Pos(usize)).init(allocator);
-    defer queue.deinit();
+    var queue = std.ArrayList(Pos(usize)).empty;
+    defer queue.deinit(allocator);
 
     try visited.put(start, {});
-    try queue.append(start);
+    try queue.append(allocator, start);
 
     while (queue.items.len > 0) {
         const current = queue.swapRemove(0); // Dequeue the first element
@@ -138,7 +138,7 @@ fn flood_fill(
 
             if (matrix.get(next.pos.x, next.pos.y) == selector) {
                 try visited.put(next.pos, {});
-                try queue.append(next.pos); // Enqueue the position
+                try queue.append(allocator, next.pos); // Enqueue the position
             }
         }
     }
@@ -265,7 +265,7 @@ fn compute_sides(allocator: std.mem.Allocator, visited: AutoHashSet(Pos(usize)))
     //     ↓ ↓ ↓
     //     - - -
     //
-    while (perimeter_tiles.popOrNull()) |entry| {
+    while (perimeter_tiles.pop()) |entry| {
         sides += 1;
         const posdir = entry.key;
 
@@ -384,9 +384,7 @@ pub fn main() !void {
     std.debug.print("day12 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day12 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
-        .track_allocations = true,
-    });
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
     try bench.add("day12 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
@@ -398,7 +396,11 @@ pub fn main() !void {
             _ = day12p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day12" {

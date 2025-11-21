@@ -1,7 +1,7 @@
 const std = @import("std");
 const log = std.log.scoped(.zbench_build);
 
-const version = std.SemanticVersion{ .major = 0, .minor = 9, .patch = 1 };
+const version = std.SemanticVersion{ .major = 0, .minor = 11, .patch = 1 };
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -21,11 +21,14 @@ pub fn build(b: *std.Build) void {
 }
 
 fn setupLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Step.Compile {
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
+        .linkage = .static,
         .name = "zbench",
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "zbench.zig" } },
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("zbench.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
         .version = version,
     });
 
@@ -36,7 +39,7 @@ fn setupLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
 
 fn setupTesting(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
     const test_files = [_]struct { name: []const u8, path: []const u8 }{
-        .{ .name = "optional", .path = "util/optional.zig" },
+        .{ .name = "partial", .path = "util/partial.zig" },
         .{ .name = "platform", .path = "util/platform.zig" },
         .{ .name = "runner", .path = "util/runner.zig" },
         .{ .name = "statistics", .path = "util/statistics.zig" },
@@ -47,9 +50,11 @@ fn setupTesting(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
     for (test_files) |test_file| {
         const _test = b.addTest(.{
             .name = test_file.name,
-            .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = test_file.path } },
-            .target = target,
-            .optimize = optimize,
+            .root_module = b.createModule(.{
+                .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = test_file.path } },
+                .target = target,
+                .optimize = optimize,
+            }),
         });
         const run_test = b.addRunArtifact(_test);
         test_step.dependOn(&run_test.step);
@@ -65,8 +70,10 @@ fn setupExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         "hooks",
         "json",
         "memory_tracking",
+        "memory_comparison",
         "parameterised",
         "progress",
+        "shuffling_allocator",
         "sleep",
         "systeminfo",
     };
@@ -74,9 +81,11 @@ fn setupExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     for (example_names) |example_name| {
         const example = b.addExecutable(.{
             .name = example_name,
-            .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = b.fmt("examples/{s}.zig", .{example_name}) } },
-            .target = target,
-            .optimize = optimize,
+            .root_module = b.createModule(.{
+                .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = b.fmt("examples/{s}.zig", .{example_name}) } },
+                .target = target,
+                .optimize = optimize,
+            }),
         });
         const install_example = b.addInstallArtifact(example, .{});
         const zbench_mod = b.addModule("zbench", .{

@@ -311,9 +311,7 @@ pub fn main() !void {
     std.debug.print("day18 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day18 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
-        .track_allocations = true,
-    });
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
     defer bench.deinit();
     try bench.add("day18 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
@@ -325,7 +323,11 @@ pub fn main() !void {
             _ = day18p2(allocator, input, 71, 1024) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day18" {

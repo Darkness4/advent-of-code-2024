@@ -67,12 +67,8 @@ fn resolve(expected: usize, equation: []usize, idx: usize, with_concat: bool) !v
 fn day07(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [31 * @sizeOf(usize)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
-    var equation = try std.ArrayList(usize).initCapacity(allocator, 30);
-    defer equation.deinit();
+    var equation_buffer: [30]usize = undefined;
+    var equation = std.ArrayList(usize).initBuffer(&equation_buffer);
 
     var acc: usize = 0;
 
@@ -148,12 +144,8 @@ test "removeEndsWith" {
 fn day07p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [31 * @sizeOf(usize)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const allocator = fba.allocator();
-
-    var equation = try std.ArrayList(usize).initCapacity(allocator, 30);
-    defer equation.deinit();
+    var equation_buffer: [30]usize = undefined;
+    var equation = std.ArrayList(usize).initBuffer(&equation_buffer);
 
     var acc: usize = 0;
 
@@ -201,7 +193,11 @@ pub fn main() !void {
             _ = day07p2(input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day07" {

@@ -1,10 +1,9 @@
 .{
-    .name = "advent-of-code-2024",
+    .name = .adventofcode2024,
+    .fingerprint = 0x610c8492bb06a291,
     .version = "0.0.0",
     .dependencies = .{
-        .zbench = .{
-            .path = "vendor/zbench",
-        },
+        .zbench = .{ .path = "vendor/zbench" },
     },
     .paths = .{
         "build.zig",

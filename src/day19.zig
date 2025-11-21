@@ -40,11 +40,12 @@ fn day19(allocator: std.mem.Allocator, data: []const u8) !usize {
     const pattern_line = lines.next() orelse unreachable;
     var patterns_it = std.mem.splitSequence(u8, pattern_line, ", ");
 
-    var patterns_list = std.BoundedArray([]const u8, 500){};
+    var buffer: [500][]const u8 = undefined;
+    var patterns_list = std.ArrayList([]const u8).initBuffer(&buffer);
     while (patterns_it.next()) |line| {
         patterns_list.appendAssumeCapacity(line);
     }
-    const patterns = patterns_list.slice();
+    const patterns = patterns_list.items;
 
     var cache = std.StringHashMap(bool).init(allocator);
     defer cache.deinit();
@@ -94,11 +95,12 @@ fn day19p2(allocator: std.mem.Allocator, data: []const u8) !usize {
     const pattern_line = lines.next() orelse unreachable;
     var patterns_it = std.mem.splitSequence(u8, pattern_line, ", ");
 
-    var patterns_list = std.BoundedArray([]const u8, 500){};
+    var buffer: [500][]const u8 = undefined;
+    var patterns_list = std.ArrayList([]const u8).initBuffer(&buffer);
     while (patterns_it.next()) |line| {
         patterns_list.appendAssumeCapacity(line);
     }
-    const patterns = patterns_list.slice();
+    const patterns = patterns_list.items;
 
     var cache = std.StringHashMap(usize).init(allocator);
     defer cache.deinit();
@@ -137,7 +139,11 @@ pub fn main() !void {
             _ = day19p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day19" {

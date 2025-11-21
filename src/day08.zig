@@ -24,21 +24,21 @@ const Pos = struct {
     /// This returns an owned slice, no need to deinit it.
     fn compute_antinode_pos_by_repeat(self: Pos, other: Pos, max: usize, allocator: std.mem.Allocator) ![]Pos {
         var list = try std.ArrayList(Pos).initCapacity(allocator, max);
-        defer list.deinit();
+        defer list.deinit(allocator);
 
         for (0..max) |n| {
             const x, var overflow = @subWithOverflow((n + 1) * self.x, n * other.x);
             if (overflow == 1 or x >= max) {
-                return list.toOwnedSlice();
+                return list.toOwnedSlice(allocator);
             }
             const y, overflow = @subWithOverflow((n + 1) * self.y, n * other.y);
             if (overflow == 1 or y >= max) {
-                return list.toOwnedSlice();
+                return list.toOwnedSlice(allocator);
             }
             list.appendAssumeCapacity(.{ .x = x, .y = y });
         }
 
-        return list.toOwnedSlice();
+        return list.toOwnedSlice(allocator);
     }
 };
 
@@ -51,19 +51,19 @@ fn AutoHashSet(comptime T: type) type {
 fn day08(allocator: std.mem.Allocator, data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
+    var buffer: [50 * 50 * @sizeOf(Pos)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
     var map = std.AutoHashMap(u8, std.ArrayList(Pos)).init(allocator);
     defer {
         // Properly deinit all the ArrayLists before deiniting the map
         var iter = map.valueIterator();
         while (iter.next()) |list| {
-            list.deinit();
+            list.deinit(fba_allocator);
         }
         map.deinit();
     }
-
-    var buffer: [50 * 50 * @sizeOf(Pos)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const fba_allocator = fba.allocator();
 
     // Read the whole map
     var x: usize = 0;
@@ -72,9 +72,9 @@ fn day08(allocator: std.mem.Allocator, data: []const u8) !usize {
             if (c != '.') {
                 const v = try map.getOrPut(c);
                 if (!v.found_existing) {
-                    v.value_ptr.* = std.ArrayList(Pos).init(fba_allocator);
+                    v.value_ptr.* = std.ArrayList(Pos).empty;
                 }
-                try v.value_ptr.append(.{ .x = x, .y = y });
+                try v.value_ptr.append(fba_allocator, .{ .x = x, .y = y });
             }
         }
     }
@@ -104,19 +104,19 @@ fn day08(allocator: std.mem.Allocator, data: []const u8) !usize {
 fn day08p2(allocator: std.mem.Allocator, data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
+    var buffer: [50 * 50 * @sizeOf(Pos)]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    const fba_allocator = fba.allocator();
+
     var map = std.AutoHashMap(u8, std.ArrayList(Pos)).init(allocator);
     defer {
         // Properly deinit all the ArrayLists before deiniting the map
         var iter = map.valueIterator();
         while (iter.next()) |list| {
-            list.deinit();
+            list.deinit(fba_allocator);
         }
         map.deinit();
     }
-
-    var buffer: [50 * 50 * @sizeOf(Pos)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const fba_allocator = fba.allocator();
 
     // Read the whole map
     var x: usize = 0;
@@ -125,9 +125,9 @@ fn day08p2(allocator: std.mem.Allocator, data: []const u8) !usize {
             if (c != '.') {
                 const v = try map.getOrPut(c);
                 if (!v.found_existing) {
-                    v.value_ptr.* = std.ArrayList(Pos).init(fba_allocator);
+                    v.value_ptr.* = std.ArrayList(Pos).empty;
                 }
-                try v.value_ptr.append(.{ .x = x, .y = y });
+                try v.value_ptr.append(fba_allocator, .{ .x = x, .y = y });
             }
         }
     }
@@ -183,7 +183,11 @@ pub fn main() !void {
             _ = day08p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day08" {

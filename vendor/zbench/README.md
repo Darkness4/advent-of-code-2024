@@ -28,8 +28,9 @@ For installation instructions, please refer to the [documentation](docs/install.
 Create a new benchmark function in your Zig code. This function takes a single argument of type `std.mem.Allocator` and runs the code you wish to benchmark.
 
 ```zig
-fn benchmarkMyFunction(allocator: std.mem.Allocator) void {
+fn myBenchmark(allocator: std.mem.Allocator) void {
     // Code to benchmark here
+    _ = allocator;
 }
 ```
 
@@ -40,7 +41,11 @@ test "bench test" {
     var bench = zbench.Benchmark.init(std.testing.allocator, .{});
     defer bench.deinit();
     try bench.add("My Benchmark", myBenchmark, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var buf: [1024]u8 = undefined;
+    var stdout_= std.fs.File.stdout().writer(&buf);
+    const writer = &stdout.interface;
+    try bench.run(writer);
+    try writer.flush();
 }
 ```
 
@@ -55,6 +60,7 @@ pub const Config = struct {
     time_budget_ns: u64 = 2e9, // 2 seconds
     hooks: Hooks = .{},
     track_allocations: bool = false, 
+    use_shuffling_allocator: bool = false,
 };
 ```
 
@@ -63,12 +69,15 @@ pub const Config = struct {
 * `time_budget_ns`: Define a time budget for the benchmark in nanoseconds. Helps in limiting the total execution time of the benchmark.
 * `hooks`: Set `before_all`, `after_all`, `before_each`, and `after_each` hooks to function pointers.
 * `track_allocations`: Boolean to enable or disable tracking memory allocations during the benchmark.
+* `use_shuffling_allocator`: an experimental `ShufflingAllocator`. This allocator randomizes memory allocation patterns, which can be useful for identifying potential memory-related bugs and reducing bias caused by predictable memory layouts during benchmarking.
+
+**Important Note:** The `ShufflingAllocator` will likely introduce *some* performance overhead compared to a standard allocator. The extent of the overhead is currently not specified! Consider this when interpreting your benchmark results.
 
 ### Compatibility Notes
 
 #### Zig version
 
-Zig is in active development and the APIs can change frequently, making it challenging to support every dev build. This project currently aims to be compatible with stable, non-development builds to provide a consistent experience for the users. As of now, zBench is tested and supported on Zig version **_0.13.0_**.
+Zig is in active development, and its APIs can change frequently. The main branch of this project now targets the latest Zig master build to take advantage of new features and improvements. For users who prefer the stability of official releases, dedicated branches are maintained for older Zig versions (e.g., zig-0.13.0, zig-0.12.0, etc.). This ensures you can choose the branch that best fits your stability and feature requirements.
 
 #### Performance Note
 

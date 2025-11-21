@@ -46,7 +46,7 @@ fn count_digits(number: usize) usize {
 // split the digits in two parts
 fn split(number: usize, digit_count: usize) SplitResult {
     var divisor: usize = 1;
-    for (digit_count - digit_count / 2) |_| {
+    for (0..digit_count - digit_count / 2) |_| {
         divisor *= 10;
     }
 
@@ -222,7 +222,11 @@ pub fn main() !void {
             _ = day11p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day11" {

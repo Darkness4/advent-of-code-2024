@@ -36,9 +36,9 @@ fn day01(data: []const u8) !usize {
         ch_idx += 3;
         list_b[idx] = scanNumber(usize, line, &ch_idx) orelse unreachable;
     }
-    const cap = idx;
-    const slice_a = list_a[0..cap];
-    const slice_b = list_b[0..cap];
+    const size = idx;
+    const slice_a = list_a[0..size];
+    const slice_b = list_b[0..size];
 
     // Sort the lists (using pdq, which is used by Go)
     std.sort.pdq(usize, slice_a, {}, comptime std.sort.asc(usize));
@@ -106,7 +106,11 @@ pub fn main() !void {
             _ = day01p2(input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day01" {

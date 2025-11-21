@@ -179,7 +179,7 @@ const PosVec2 = struct {
     }
 };
 
-fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(Pos)) !Pos {
+fn moveAndRegisterTrails(allocator: std.mem.Allocator, map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(Pos)) !Pos {
     var last_pos = pos;
     var new_pos = pos;
     while (new_pos.x > 0 and new_pos.x < map.size - 1 and new_pos.y > 0 and new_pos.y < map.size - 1) {
@@ -187,7 +187,7 @@ fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(P
         if (map.data[new_pos.x][new_pos.y] != 'X') {
             map.data[new_pos.x][new_pos.y] = 'X';
             // Register to history
-            try trails.append(new_pos);
+            try trails.append(allocator, new_pos);
         }
 
         // Update new_pod
@@ -200,7 +200,7 @@ fn moveAndRegisterTrails(map: Map, pos: Pos, dir: Vec2, trails: *std.ArrayList(P
             return last_pos;
         }
     }
-    try trails.append(new_pos);
+    try trails.append(allocator, new_pos);
     if (new_pos.x == 0 or new_pos.x == map.size - 1 or new_pos.y == 0 or new_pos.y == map.size - 1) {
         return MapError.BoundaryReached;
     }
@@ -266,13 +266,13 @@ fn day06p2(allocator: std.mem.Allocator, data: []const u8) !u64 {
 
     // Play the game.
     var obstacles = try std.ArrayList(Pos).initCapacity(allocator, 201 * 201 * 4);
-    defer obstacles.deinit();
+    defer obstacles.deinit(allocator);
 
     var pos = map.starting_point;
     var dir_idx: usize = 0;
     while (true) : (dir_idx = (dir_idx + 1) % 4) {
         const dir = dirs[dir_idx];
-        pos = moveAndRegisterTrails(map, pos, dir, &obstacles) catch |err| {
+        pos = moveAndRegisterTrails(allocator, map, pos, dir, &obstacles) catch |err| {
             if (err == MapError.BoundaryReached) {
                 break;
             }
@@ -335,7 +335,11 @@ pub fn main() !void {
             _ = day06p2(allocator, input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day06" {

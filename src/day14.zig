@@ -135,12 +135,8 @@ fn quadrants(max: Pos(isize)) [4]Quandrant {
 fn day14(data: []const u8, comptime max: Pos(isize)) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [500 * @sizeOf(Robot)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const fba_allocator = fba.allocator();
-
-    var robots = try std.ArrayList(Robot).initCapacity(fba_allocator, 500);
-    defer robots.deinit();
+    var buffer: [500]Robot = undefined;
+    var robots = std.ArrayList(Robot).initBuffer(&buffer);
 
     while (lines.next()) |line| {
         const robot = scanLine(line, max);
@@ -223,15 +219,11 @@ var dirs = [_]Vec2(isize){
 fn day14p2(allocator: std.mem.Allocator, data: []const u8, comptime max: Pos(isize)) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
 
-    var buffer: [500 * @sizeOf(Robot)]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    const fba_allocator = fba.allocator();
-
     var matrix = try Matrix.init(max.x, max.y, allocator);
     defer matrix.deinit();
 
-    var robots = try std.ArrayList(Robot).initCapacity(fba_allocator, 500);
-    defer robots.deinit();
+    var buffer: [500]Robot = undefined;
+    var robots = std.ArrayList(Robot).initBuffer(&buffer);
 
     while (lines.next()) |line| {
         const robot = scanLine(line, max);
@@ -292,7 +284,11 @@ pub fn main() !void {
             _ = day14p2(allocator, input, .{ .x = max_x, .y = max_y }) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day14" {

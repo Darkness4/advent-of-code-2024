@@ -39,12 +39,14 @@ pub fn build(b: *std.Build) !void {
     var day_run_desc_buf: [24]u8 = undefined;
     var source_path_buf: [24]u8 = undefined;
     for (days) |day| {
-        const source_path = b.path(try std.fmt.bufPrint(&source_path_buf, "src/{s}.zig", .{day}));
+        const mod = b.createModule(.{
+            .root_source_file = b.path(try std.fmt.bufPrint(&source_path_buf, "src/{s}.zig", .{day})),
+            .optimize = optimize,
+            .target = target,
+        });
         const day_exe = b.addExecutable(.{
             .name = day,
-            .root_source_file = source_path,
-            .target = target,
-            .optimize = optimize,
+            .root_module = mod,
         });
         day_exe.root_module.addImport("zbench", zbench_module);
         const day_run = b.step(day, try std.fmt.bufPrint(&day_run_desc_buf, "Run {s}", .{day}));
@@ -54,9 +56,7 @@ pub fn build(b: *std.Build) !void {
 
         const day_test = b.addTest(.{
             .name = day,
-            .root_source_file = source_path,
-            .target = target,
-            .optimize = optimize,
+            .root_module = day_exe.root_module,
         });
         day_test.root_module.addImport("zbench", zbench_module);
         test_run.dependOn(&(b.addRunArtifact(day_test)).step);

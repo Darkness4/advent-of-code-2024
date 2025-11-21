@@ -44,9 +44,10 @@ fn day05(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var pages = std.BoundedArray(usize, 25){};
+    var buffer: [25]usize = undefined;
+    var pages = std.ArrayList(usize).initBuffer(&buffer);
     while (lines.next()) |line| {
-        defer pages.clear();
+        defer pages.clearRetainingCapacity();
 
         // Read everything
         var idx: usize = 0;
@@ -54,7 +55,7 @@ fn day05(data: []const u8) !u64 {
             const n = scanNumber(usize, line, &idx) orelse unreachable;
             pages.appendAssumeCapacity(n);
         }
-        const pages_slice = pages.slice();
+        const pages_slice = pages.items;
 
         var is_valid = true;
         // For each items
@@ -100,9 +101,10 @@ fn day05p2(data: []const u8) !u64 {
 
     // Read second section.
     var acc: u64 = 0;
-    var pages = std.BoundedArray(usize, 25){};
+    var buffer: [25]usize = undefined;
+    var pages = std.ArrayList(usize).initBuffer(&buffer);
     while (lines.next()) |line| {
-        defer pages.clear();
+        defer pages.clearRetainingCapacity();
 
         // Read everything
         var idx: usize = 0;
@@ -110,7 +112,7 @@ fn day05p2(data: []const u8) !u64 {
             const n = scanNumber(usize, line, &idx) orelse unreachable;
             pages.appendAssumeCapacity(n);
         }
-        const pages_slice = pages.slice();
+        const pages_slice = pages.items;
 
         var is_valid = false;
         // Flag to add the middle element at the end of the resolution.
@@ -164,7 +166,11 @@ pub fn main() !void {
             _ = day05p2(input) catch unreachable;
         }
     }.call, .{});
-    try bench.run(std.io.getStdOut().writer());
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    try bench.run(stdout);
+    try stdout.flush();
 }
 
 test "day05" {
