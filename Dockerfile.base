@@ -1,29 +1,25 @@
-FROM docker.io/gentoo/stage3:amd64-openrc AS base-builder
+# --------------------------
+FROM alpine:edge AS build
+# --------------------------
 
-COPY .docker/etc/portage/package.accept_keywords/default /etc/portage/package.accept_keywords/default
-COPY .docker/etc/portage/binrepos.conf/gentoobinhost.conf /etc/portage/binrepos.conf/gentoobinhost.conf
-COPY .docker/etc/portage/make.conf /etc/portage/make.conf
+# Build rootfs from scratch
+RUN apk --allow-untrusted \
+  -X http://dl-cdn.alpinelinux.org/alpine/edge/main \
+  -X http://dl-cdn.alpinelinux.org/alpine/edge/community \
+  -U \
+  -p /newroot \
+  --no-cache \
+  --initdb \
+  add \
+  alpine-release \
+  zig
 
-RUN emerge-webrsync && sed -i '/hkps:\/\/keys\.openpgp\.org/d' /usr/sbin/getuto && getuto
+WORKDIR /work
 
-RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" emerge \
-  --with-bdeps=n \
-  --getbinpkg \
-  --onlydeps \
-  'dev-lang/zig'
-
-FROM base-builder AS zig-builder
-
-RUN ROOT="/rootfs" MAKEOPTS="-j$(nproc)" \
-  ZIG_MCPU="x86_64_v3" \
-  emerge \
-  --with-bdeps=n \
-  --getbinpkg \
-  'dev-lang/zig'
-
+# --------------------
 FROM scratch
+# --------------------
 
-COPY --from=base-builder /rootfs /
-COPY --from=zig-builder /rootfs /
+COPY --from=build /newroot /
 
 ENTRYPOINT [ "/usr/bin/zig" ]
