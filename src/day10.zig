@@ -65,7 +65,7 @@ const Matrix = struct {
         } else if (self.row_size != row.len) {
             std.debug.panic("row size mismatch\n", .{});
         }
-        std.mem.copyForwards(u8, self.data[self.row_cap * self.total_rows .. self.row_cap * (self.total_rows + 1)], row);
+        @memmove(self.data[self.row_cap * self.total_rows .. (self.row_cap * self.total_rows) + row.len], row);
         self.total_rows += 1;
     }
 };

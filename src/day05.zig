@@ -128,7 +128,7 @@ fn day05p2(data: []const u8) !u64 {
                         was_invalid = true;
                         // Pop the item before i and insert it after i (at the end).
                         const item = j;
-                        std.mem.copyForwards(usize, pages_slice[j_idx..], pages_slice[j_idx + 1 ..]);
+                        @memmove(pages_slice[j_idx .. j_idx + pages_slice[j_idx + 1 ..].len], pages_slice[j_idx + 1 ..]);
                         pages_slice[pages_slice.len - 1] = item;
                         continue :redo;
                     }
